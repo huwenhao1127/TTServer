@@ -7,18 +7,22 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 #include "FileAppender.h"
+#include "Logger.h"
+#include <fstream>
 
 namespace tts
 {
 
-void FileAppender::Append(EnmLoggerLevel eLevel, const STLogRecord& stRecord)
+void FileAppender::Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord)
 {
-    if (eLevel < m_eLevel)
+    if (eLevel > stLogger.GetLoggerLevel())
     {
         return ;
     }
     ReOpenFile();
-    m_oFileStream << m_ptrFormatter->Format(stRecord);
+    std::cout << m_stFormatter.Format(eLevel, stLogger, stRecord);
+    m_oFileStream << m_stFormatter.Format(eLevel, stLogger, stRecord);
+    m_oFileStream.close();
 }
 
 void FileAppender::ReOpenFile()
@@ -27,7 +31,7 @@ void FileAppender::ReOpenFile()
     {
         m_oFileStream.close();
     }
-    m_oFileStream.open(m_sFileName);
+    m_oFileStream.open(m_sFileName.c_str(), std::ios::app);
 }
 
 }

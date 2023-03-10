@@ -8,17 +8,33 @@
  */
 #pragma once
 #include "Singleton.h"
-#include "BaseAppender.h"
+#include "FileAppender.h"
+#include "StdoutAppender.h"
 #include "LoggerCommDef.h"
 
 namespace tts {
+
+#define LOG_DBG(logger, msg)    \
+{                               \
+    tts::STLogRecord stRecord{time(0), __FILE__, __LINE__, 0, 0, "", __FUNCTION__, msg};   \
+    logger->Debug(stRecord); \
+}                            \
+
+#define LOG_ERR(logger, msg)    \
+{                               \
+    tts::STLogRecord stRecord{time(0), __FILE__, __LINE__, 0, 0, "", __FUNCTION__, msg};   \
+    logger->Error(stRecord); \
+}                            \
 
 class Logger
 {
 public:
     typedef std::shared_ptr<Logger> ptr;
 
-    Logger(const std::string& sLoggerName = "root", EnmLoggerLevel eLevel = ENM_LOGGER_LEVEL_NONE);
+    Logger(const std::string& sLoggerName = "root", EnmLoggerLevel eLevel = NONE) : 
+        m_sName(sLoggerName),
+        m_eLevel(eLevel)
+        {}
     ~Logger() {}
 
 public:
@@ -47,8 +63,11 @@ public:
      * @param {EnmAppenderType} eType appender类型
      * @return {*}
      */    
-    void AddAppender(BaseAppender::ptr oAppender) {m_listAppender.push_back(oAppender);}
-    void DelAppender(BaseAppender::ptr oAppender);
+    void AddAppender(BaseAppender::ptr ptrAppender);
+    void DelAppender(BaseAppender::ptr ptrAppender);
+
+    const std::string& GetLoggerName() {return m_sName;}
+    
 private:
     std::string m_sName;
     EnmLoggerLevel m_eLevel;

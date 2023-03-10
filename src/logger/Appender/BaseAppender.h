@@ -12,31 +12,33 @@
 
 namespace tts {
 
+class Logger;
+
 class BaseAppender
 {
-    
 public:
     typedef std::shared_ptr<BaseAppender> ptr;
-    BaseAppender() {}
-    virtual ~BaseAppender() = 0;
+    BaseAppender(const std::string& sPattern = DEFAULT_FORMATTER_PATTERN)
+        : m_stFormatter(sPattern)
+        {
+        }
+    virtual ~BaseAppender() {}
 
-public:    
+public:
     /**
      * 输出内容
     */
-    virtual void Append(EnmLoggerLevel eLevel, const STLogRecord& stRecord) = 0;
+    virtual void Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord) {}
 
     /**
      * @description: 设置输出格式
      * @param {ptr} ptrFormatter
      * @return {*}
      */    
-    void SetFormatter(Formatter::ptr ptrFormatter) {m_ptrFormatter = ptrFormatter;}
-    Formatter::ptr GetFormatter() const {return m_ptrFormatter;} 
+    Formatter& GetFormatter()  {return m_stFormatter;} 
 
 protected:
-    EnmLoggerLevel m_eLevel;
-    Formatter::ptr m_ptrFormatter;
+    Formatter m_stFormatter;  // 使用的Formatter
 };
 
 }

@@ -1,17 +1,18 @@
 #include "StdoutAppender.h"
+#include "Logger.h"
+#include <iostream>
 
 namespace tts
 {
 
-void StdoutAppender::Append(EnmLoggerLevel eLevel, const STLogRecord& stRecord)
+void StdoutAppender::Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord)
 {
-    if (eLevel < m_eLevel)
+    if (eLevel > stLogger.GetLoggerLevel())
     {
         return ;
     }
     
-    std::cout << m_ptrFormatter->Format(stRecord);
+    std::cout << m_stFormatter.Format(eLevel, stLogger, stRecord);
 }
-
 
 }

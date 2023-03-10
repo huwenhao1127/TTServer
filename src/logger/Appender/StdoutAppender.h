@@ -15,13 +15,16 @@ class StdoutAppender : public BaseAppender
 {
 public:
     typedef std::shared_ptr<StdoutAppender> ptr;
-    StdoutAppender() {}
-    ~StdoutAppender() override;
+    StdoutAppender(const std::string& sPattern = DEFAULT_FORMATTER_PATTERN)
+        : BaseAppender(sPattern)
+    { 
+    }
+    ~StdoutAppender() {}
 public:
     /**
      * 输出内容到终端
     */
-    void Append(EnmLoggerLevel eLevel, const STLogRecord& stRecord) override;
+    virtual void Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord) override;
 };
 
 }

@@ -15,16 +15,18 @@ class FileAppender : public BaseAppender
 {
 public:
     typedef std::shared_ptr<FileAppender> ptr;
-    FileAppender(const std::string& sFileName) : m_sFileName(sFileName)
-    {
-    }
-    ~FileAppender() override;
+    FileAppender(const std::string& sFileName, const std::string& sPattern = DEFAULT_FORMATTER_PATTERN)
+        : BaseAppender(sPattern),
+          m_sFileName(sFileName) 
+        { 
+        }
+    ~FileAppender() {}
 
 public:
     /**
      * 输出内容到文件
     */
-    void Append(EnmLoggerLevel eLevel, const STLogRecord& stRecord) override;
+    virtual void Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord) override;
 
 private:
     void ReOpenFile();

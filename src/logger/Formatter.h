@@ -8,26 +8,170 @@
  */
 
 #pragma once
-#include "LoggerCommDef.h" 
-#include "Singleton.h"
+#include "LoggerCommDef.h"
+#include <iostream>
+#include <functional>
+#include <map>
+#include <vector>
 
 namespace tts {
 
 class BaseAppender;
+class Logger;
 
-class Formatter : public Singleton<Formatter>
+#define DEFAULT_FORMATTER_PATTERN "[%d{%Y-%m-%d %H:%M:%S}]|%L|%f:%l|%U|%t|%F|%m %n"
+
+/**
+ * @brief 格式化日志item
+ * 
+ * @param[out] osFmtItem   item输出流
+ * @param[in] ptrLogger    所属日志器
+ * @param[in] stRecord     日志记录
+ * @param[in] sFormat      格式
+ */
+typedef std::function<void (std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat)> ItemFmtFunc;
+
+class Formatter
 {
 public:
-    typedef std::shared_ptr<Formatter> ptr;
-    Formatter() {}
+    /**
+     * sPattern模式说明：
+     *  %m 消息
+     *  %L 日志级别
+     *  %c 日志名称
+     *  %t 线程id
+     *  %n 换行
+     *  %d 时间
+     *  %f 文件名
+     *  %l 行号
+     *  %T 制表符
+     *  %F 协程id
+     *  %N 线程名称
+     *  %U 函数名
+     *  {}内的内容为模式附加的字符串
+     *  其它字符 自定义字符串对应%s
+     * 
+     *  默认格式 "[%d{%Y-%m-%d %H:%M:%S}]%c|%L|%f:%l|%U|%t|%F| %m %n"
+     **/
+    Formatter(const std::string& sPattern = DEFAULT_FORMATTER_PATTERN)
+        : m_sFormatter(sPattern)
+        {
+            Init();
+        }
     ~Formatter() {}
 
+    void Init();
+
 public:
-    const std::string& Format(const STLogRecord& stRecord);
+    /**
+     * @brief 对日志记录格式化，输出字符串
+     */
+    std::string Format(EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord);
+
+    /**
+     * @brief 获取日志格式
+     */
+    const std::string& getPattern() const { return m_sFormatter;}
+
+public:
+    /**
+     * @brief 日志内容
+     */
+    static void MessageItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+
+    /**
+     * @brief 日志级别
+     */
+    static void LevelItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+
+    /**
+     * @brief 日志名称
+     */
+    static void NameItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+
+    /**
+     * @brief 线程id
+     */
+    static void ThreadIdItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+
+    /**
+     * @brief 换行
+     */
+    static void NewLineItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat  = "");
+
+    /**
+     * @brief 日期
+     */
+    static void DateTimeItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "%Y-%m-%d %H:%M:%S");
+
+    /**
+     * @brief 文件名
+     */
+    static void FilenameItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+
+    /**
+     * @brief 行号
+     */
+    static void LineNumItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+
+    /**
+     * @brief 制表符
+     */
+    static void TabItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+
+    /**
+     * @brief 协程id
+     */
+    static void FiberIdItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+
+    /**
+     * @brief 线程名
+     */
+    static void ThreadNameItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat  = "");
+
+    /**
+     * @brief 函数名
+     */
+    static void FuncNameItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+    
+    /**
+     * @brief 自定义字符串
+     */
+    static void StringItemFormat(
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
+
+    /**
+     * @brief 日志级别转字符串
+     */
+    static const char* LevelToString(EnmLoggerLevel eLevel);
 
 private:
-   std::string m_sFormatter; 
-   BaseAppender::ptr m_ptrAppender;     // 所属的Appender
+    /**
+     * @brief 绑定模式与对应的fmt函数
+     */
+    void BindItemAndFmtFunc();
+
+    /**
+     * @brief 将Formatter字符串解析为模式
+     */
+    void ParseFormatter();
+private:
+    std::string m_sFormatter;         // 输出格式
+    bool m_bError;                    // pattern错误
+    std::map<char, ItemFmtFunc> m_mapItemFmt;   // 所有Item的Fmt函数
+    std::vector<std::tuple<char, std::string>> m_vecItems;  // Formatter对应所有items, 0:模式，1:模式附加的字符串
 };
 
 }

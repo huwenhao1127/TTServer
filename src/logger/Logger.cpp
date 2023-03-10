@@ -12,16 +12,10 @@
 namespace tts
 {
 
-Logger::Logger(const std::string& sLoggerName = "root", EnmLoggerLevel eLevel = ENM_LOGGER_LEVEL_NONE) :
-    m_sName(sLoggerName), m_eLevel(eLevel)
-{
-    return;
-}
-
 void Logger::Record(EnmLoggerLevel eLevel, const STLogRecord& stOneRecord)
 {
     // 不输出低等级日志
-    if (eLevel < m_eLevel)
+    if (eLevel > m_eLevel)
     {
         return;
     }
@@ -29,7 +23,7 @@ void Logger::Record(EnmLoggerLevel eLevel, const STLogRecord& stOneRecord)
     // 内容通过AppderMgr输出
     for (auto ptrAppender : m_listAppender)
     {
-        ptrAppender->Append(eLevel, stOneRecord);
+        ptrAppender->Append(eLevel, *this, stOneRecord);
     }
     
     return;
@@ -37,39 +31,44 @@ void Logger::Record(EnmLoggerLevel eLevel, const STLogRecord& stOneRecord)
 
 void Logger::Debug(const STLogRecord& stOneRecord)
 {
-    Record(ENM_LOGGER_LEVEL_DEBUG, stOneRecord);
+    Record(DEBUG, stOneRecord);
 }
 
 void Logger::Info(const STLogRecord& stOneRecord)
 {
-    Record(ENM_LOGGER_LEVEL_INFO, stOneRecord);
+    Record(INFO, stOneRecord);
 }
 
 void Logger::Warn(const STLogRecord& stOneRecord)
 {
-    Record(ENM_LOGGER_LEVEL_WARN, stOneRecord);
+    Record(WARN, stOneRecord);
 }
 
 void Logger::Error(const STLogRecord& stOneRecord)
 {   
-    Record(ENM_LOGGER_LEVEL_ERROR, stOneRecord);
+    Record(ERROR, stOneRecord);
 }
 
 void Logger::Fatal(const STLogRecord& stOneRecord)
 {
-    Record(ENM_LOGGER_LEVEL_FATAL, stOneRecord);
+    Record(FATAL, stOneRecord);
 }
 
-void Logger::DelAppender(BaseAppender::ptr oAppender)
+void Logger::DelAppender(BaseAppender::ptr ptrAppender)
 {
     for (auto iter = m_listAppender.begin(); iter != m_listAppender.end(); ++iter)
     {
-        if (*iter = oAppender)
+        if (*iter = ptrAppender)
         {
             m_listAppender.erase(iter);
             break;
         }
     }
+}
+
+void Logger::AddAppender(BaseAppender::ptr ptrAppender) 
+{
+    m_listAppender.push_back(ptrAppender);
 }
 
 

@@ -11,8 +11,6 @@
 
 namespace tts {
 
-#define MAX_LOGGER_CONTENT_SIZE 1024
-
 // 日志记录
 struct STLogRecord
 {
@@ -21,17 +19,19 @@ struct STLogRecord
     uint32_t m_uiLineNum;       // 行号
     uint32_t m_uiThreadID;      // 线程id
     uint32_t m_uiFiberID;       // 协程id
-    const char m_szContent[MAX_LOGGER_CONTENT_SIZE];    // 内容
+    const char* m_szThreadName; // 线程名
+    const char* m_szFuncName;   // 函数名
+    const char* m_szContent;    // 内容
 };
 
 enum EnmLoggerLevel
 {
-    ENM_LOGGER_LEVEL_NONE  = 0,      // 默认所有级别日志都输出
-    ENM_LOGGER_LEVEL_DEBUG = 1,
-    ENM_LOGGER_LEVEL_INFO  = 2,
-    ENM_LOGGER_LEVEL_WARN  = 3,
-    ENM_LOGGER_LEVEL_ERROR = 4,
-    ENM_LOGGER_LEVEL_FATAL = 5,
+    NONE  = 0,      // 默认所有级别日志都输出
+    DEBUG = 1,
+    INFO  = 2,
+    WARN  = 3,
+    ERROR = 4,
+    FATAL = 5,
 };
 
 
