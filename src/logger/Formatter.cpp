@@ -46,10 +46,10 @@ void Formatter::ParseFormatter()
             {
                 // 解析日期的格式
                 std::string strTimeFmt = "";
+                bool bSucc = false;
                 if (i + 2 < m_sFormatter.size() && m_sFormatter[i+2] == '{')
                 {
                     std::size_t iIdx = i + 3;
-                    bool bSucc = false;
                     while (iIdx < m_sFormatter.size() && m_sFormatter[iIdx] != '}')
                     {
                         strTimeFmt = strTimeFmt + m_sFormatter[iIdx];
@@ -59,16 +59,16 @@ void Formatter::ParseFormatter()
                             bSucc = true;
                         }
                     }
-                    // 匹配日期格式失败
-                    if (!bSucc)
-                    {
-                        strTimeFmt = "";
-                        i = i+1;          
-                    }
-                    else
+                    // 匹配日期格式成功
+                    if (bSucc)
                     {
                         i = iIdx;
                     }
+                }
+                if (!bSucc)
+                {
+                    strTimeFmt = "";
+                    i = i + 1;          
                 }
                 m_vecItems.push_back(std::tuple<char, std::string>('d', strTimeFmt));
             }
@@ -76,7 +76,7 @@ void Formatter::ParseFormatter()
             else
             {
                 m_vecItems.push_back(std::tuple<char, std::string>(m_sFormatter[i+1], ""));
-                i = i+1;
+                i = i + 1;
             }
         }
     }
@@ -89,16 +89,7 @@ std::string Formatter::Format(EnmLoggerLevel eLevel, Logger& stLogger, const STL
     {
         char cItem = std::get<0>(tupItem);
         std::string& sExInfo = std::get<1>(tupItem);
-
-        if (cItem == 'd' && sExInfo == "")
-        {
-            // 使用默认日期格式
-            m_mapItemFmt[cItem](ssFmt, eLevel, stLogger, stRecord, "%Y-%m-%d %H:%M:%S");
-        }
-        else
-        {
-            m_mapItemFmt[cItem](ssFmt, eLevel, stLogger, stRecord, sExInfo);
-        }
+        m_mapItemFmt[cItem](ssFmt, eLevel, stLogger, stRecord, sExInfo);
     }
     return ssFmt.str();
 }
@@ -137,11 +128,20 @@ void Formatter::DateTimeItemFormat(
     std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat /* = "%Y-%m-%d %H:%M:%S" */)
 {
     struct tm tm;
-    time_t time = stRecord.m_tTime;
+    time_t time = stRecord.m_valTime.tv_sec;
     localtime_r(&time, &tm);
     char szBuf[64];
-    strftime(szBuf, sizeof(szBuf), sFormat.c_str(), &tm);
-    osFmtItem << szBuf;
+    if (sFormat.empty())
+    {
+        // 默认格式
+        strftime(szBuf, sizeof(szBuf), "%Y-%m-%d %H:%M:%S", &tm);
+        osFmtItem << szBuf << "." << std::to_string(stRecord.m_valTime.tv_usec);
+    }
+    else
+    {
+        strftime(szBuf, sizeof(szBuf), sFormat.c_str(), &tm);
+        osFmtItem << szBuf;
+    }
 }
 
 void Formatter::FilenameItemFormat(

@@ -10,21 +10,28 @@
 #include "Singleton.h"
 #include "FileAppender.h"
 #include "StdoutAppender.h"
+#include "RotateAppender.h"
 #include "LoggerCommDef.h"
 
 namespace tts {
 
-#define LOG_DBG(logger, msg)    \
-{                               \
-    tts::STLogRecord stRecord{time(0), __FILE__, __LINE__, 0, 0, "", __FUNCTION__, msg};   \
-    logger->Debug(stRecord); \
-}                            \
+#define LOG_DBG(logger, msg)        \
+do                                  \
+{                                   \
+    timeval tVal;                   \
+    gettimeofday(&tVal, nullptr);   \
+    tts::STLogRecord stRecord{tVal, __FILE__, __LINE__, 0, 0, "", __FUNCTION__, msg};   \
+    logger->Debug(stRecord);        \
+}   while(0)                        \
 
-#define LOG_ERR(logger, msg)    \
-{                               \
-    tts::STLogRecord stRecord{time(0), __FILE__, __LINE__, 0, 0, "", __FUNCTION__, msg};   \
-    logger->Error(stRecord); \
-}                            \
+#define LOG_ERR(logger, msg)        \
+do                                  \
+{                                   \
+    timeval tVal;                   \
+    gettimeofday(&tVal, nullptr);   \
+    tts::STLogRecord stRecord{tVal, __FILE__, __LINE__, 0, 0, "", __FUNCTION__, msg};   \
+    logger->Error(stRecord);        \
+}   while(0)                        \
 
 class Logger
 {
@@ -34,7 +41,7 @@ public:
     Logger(const std::string& sLoggerName = "root", EnmLoggerLevel eLevel = NONE) : 
         m_sName(sLoggerName),
         m_eLevel(eLevel)
-        {}
+    {}
     ~Logger() {}
 
 public:

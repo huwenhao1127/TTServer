@@ -19,7 +19,7 @@ namespace tts {
 class BaseAppender;
 class Logger;
 
-#define DEFAULT_FORMATTER_PATTERN "[%d{%Y-%m-%d %H:%M:%S}]|%L|%f:%l|%U|%t|%F|%m %n"
+#define DEFAULT_FORMATTER_PATTERN "[%d]|%L|%f:%l|%U|%t|%F|%m %n"
 
 /**
  * @brief 格式化日志item
@@ -41,23 +41,24 @@ public:
      *  %c 日志名称
      *  %t 线程id
      *  %n 换行
-     *  %d 时间
+     *  %d 时间 默认格式[年-月-日 小时:分钟:秒.毫秒]. 也支持传入strftime格式, 例如%d{%Y-%M-%D}
      *  %f 文件名
      *  %l 行号
      *  %T 制表符
      *  %F 协程id
      *  %N 线程名称
      *  %U 函数名
+     * 
      *  {}内的内容为模式附加的字符串
      *  其它字符 自定义字符串对应%s
      * 
-     *  默认格式 "[%d{%Y-%m-%d %H:%M:%S}]%c|%L|%f:%l|%U|%t|%F| %m %n"
+     *  默认格式 "[%d]|%L|%f:%l|%U|%t|%F| %m %n"
      **/
     Formatter(const std::string& sPattern = DEFAULT_FORMATTER_PATTERN)
         : m_sFormatter(sPattern)
-        {
-            Init();
-        }
+    {
+        Init();
+    }
     ~Formatter() {}
 
     void Init();
@@ -108,7 +109,7 @@ public:
      * @brief 日期
      */
     static void DateTimeItemFormat(
-        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "%Y-%m-%d %H:%M:%S");
+        std::ostream& osFmtItem, EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord, const std::string& sFormat = "");
 
     /**
      * @brief 文件名

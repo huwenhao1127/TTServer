@@ -12,6 +12,7 @@
 
 namespace tts {
 
+#define MAX_FMT_CONTENT_SIZE 128
 class Logger;
 
 class BaseAppender
@@ -20,8 +21,8 @@ public:
     typedef std::shared_ptr<BaseAppender> ptr;
     BaseAppender(const std::string& sPattern = DEFAULT_FORMATTER_PATTERN)
         : m_stFormatter(sPattern)
-        {
-        }
+    {
+    }
     virtual ~BaseAppender() {}
 
 public:
@@ -38,7 +39,8 @@ public:
     Formatter& GetFormatter()  {return m_stFormatter;} 
 
 protected:
-    Formatter m_stFormatter;  // 使用的Formatter
+    Formatter m_stFormatter;                        // 使用的Formatter
+    char szFmtRes[MAX_FMT_CONTENT_SIZE + 1];        // 存放格式化字符串
 };
 
 }

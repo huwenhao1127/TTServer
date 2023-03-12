@@ -14,5 +14,6 @@
 #include <sstream>
 #include <fstream>
 #include <memory>
+#include <sys/time.h> 
 
 #define ZeroStruct(stDst) memset(&stDst, 0, sizeof(stDst));

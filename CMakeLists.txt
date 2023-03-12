@@ -31,6 +31,7 @@ set(LIB_SRC
     src/logger/Appender/StdoutAppender.cpp
     src/logger/Appender/FileAppender.cpp
     src/logger/Appender/BaseAppender.cpp
+    src/logger/Appender/RotateAppender.cpp
     )
 
 message(${LIB_SRC})
@@ -51,5 +52,5 @@ target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/
 
 
 # 设置输出路径
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/bin)
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/lib)
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)

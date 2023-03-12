@@ -14,7 +14,7 @@ namespace tts {
 // 日志记录
 struct STLogRecord
 {
-    time_t m_tTime;             // 时间
+    timeval m_valTime;             // 时间
     const char* m_szFile;       // 文件名
     uint32_t m_uiLineNum;       // 行号
     uint32_t m_uiThreadID;      // 线程id
