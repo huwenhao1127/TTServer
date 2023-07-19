@@ -57,8 +57,9 @@ public:
     Formatter(const std::string& sPattern = DEFAULT_FORMATTER_PATTERN)
         : m_sFormatter(sPattern)
     {
-        Init();
+        return;
     }
+    
     ~Formatter() {}
 
     void Init();

@@ -1,0 +1,7 @@
+#pragma once
+#include <string>
+
+const std::string git_branch = "@GIT_BRANCH@";
+const std::string git_hash = "@GIT_HASH@";
+const std::string git_time = "@GIT_TIME@";
+const std::string git_des = "@GIT_DES@";

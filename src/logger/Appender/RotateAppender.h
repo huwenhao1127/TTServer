@@ -20,15 +20,9 @@ public:
           m_sCurFileName(m_sDirName + "/" + m_sLogName + "." + std::to_string(m_iCurFileID)),
           pstFile(nullptr),
           m_iFlush(0)
-    {}
-    ~RotateAppender()
-    {
-        if (nullptr != pstFile)
-        {
-            fclose(pstFile);
-            pstFile = nullptr;
-        }
-    }
+          {}
+
+    virtual ~RotateAppender() override;
 
 public:
     /**

@@ -20,7 +20,10 @@ public:
           m_sFileName(sFileName) 
         { 
         }
-    ~FileAppender() {}
+    ~FileAppender() 
+    {
+        
+    }
 
 public:
     /**

@@ -7,6 +7,15 @@
 namespace tts
 {
 
+RotateAppender::~RotateAppender()
+{
+    if (nullptr != pstFile)
+    {
+        fclose(pstFile);
+        pstFile = nullptr;
+    }
+} 
+
 void RotateAppender::Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord)
 {
     OpenFile();

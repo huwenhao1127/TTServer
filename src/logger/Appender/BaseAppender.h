@@ -22,6 +22,8 @@ public:
     BaseAppender(const std::string& sPattern = DEFAULT_FORMATTER_PATTERN)
         : m_stFormatter(sPattern)
     {
+        m_stFormatter.Init();
+        return;
     }
     virtual ~BaseAppender() {}
 
@@ -29,7 +31,7 @@ public:
     /**
      * 输出内容
     */
-    virtual void Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord) {}
+    virtual void Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLogRecord& stRecord) = 0;
 
     /**
      * @description: 设置输出格式
