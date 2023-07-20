@@ -68,12 +68,6 @@ set(TIME_TEST_BIN_SRC
     src/test/time_test.cpp
     src/time/Now.cpp
     src/time/TimeWheel.cpp
-    src/logger/Logger.cpp
-    src/logger/Formatter.cpp
-    src/logger/Appender/StdoutAppender.cpp
-    src/logger/Appender/FileAppender.cpp
-    src/logger/Appender/BaseAppender.cpp
-    src/logger/Appender/RotateAppender.cpp
     )
 add_executable(time_test ${TIME_TEST_BIN_SRC})
 # 添加头文件搜索路径
@@ -90,15 +84,9 @@ target_link_libraries(time_test TTServer)
 # logger功能测试
 set(LOGGER_TEST_BIN_SRC  
     src/test/logger_test.cpp
-    src/logger/Logger.cpp
-    src/logger/Formatter.cpp
-    src/logger/Appender/StdoutAppender.cpp
-    src/logger/Appender/FileAppender.cpp
-    src/logger/Appender/BaseAppender.cpp
-    src/logger/Appender/RotateAppender.cpp
     )
 add_executable(logger_test ${LOGGER_TEST_BIN_SRC})
-# # 添加头文件搜索路径
+# 添加头文件搜索路径
 target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
 target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
 target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")

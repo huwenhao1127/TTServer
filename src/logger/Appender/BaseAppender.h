@@ -12,7 +12,7 @@
 
 namespace tts {
 
-#define MAX_FMT_CONTENT_SIZE 128
+#define MAX_FMT_CONTENT_SIZE 256
 class Logger;
 
 class BaseAppender
@@ -42,7 +42,7 @@ public:
 
 protected:
     Formatter m_stFormatter;                        // 使用的Formatter
-    char szFmtRes[MAX_FMT_CONTENT_SIZE + 1];        // 存放格式化字符串
+    char m_szFmtRes[MAX_FMT_CONTENT_SIZE + 1];        // 存放格式化字符串
 };
 
 }

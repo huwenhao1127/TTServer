@@ -20,8 +20,7 @@ void RotateAppender::Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLog
 {
     OpenFile();
     std::string strRecord = m_stFormatter.Format(eLevel, stLogger, stRecord);
-    
-    strncpy(szFmtRes, strRecord.c_str(), MAX_FMT_CONTENT_SIZE);
+    strncpy(m_szFmtRes, strRecord.c_str(), MAX_FMT_CONTENT_SIZE);
     int iLen = strRecord.size() >= MAX_FMT_CONTENT_SIZE ? MAX_FMT_CONTENT_SIZE : strRecord.size();
 
     if (nullptr == pstFile)
@@ -30,12 +29,13 @@ void RotateAppender::Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLog
         return;
     }
 
-    size_t sztRet = fwrite(szFmtRes, iLen, 1, pstFile);
-    if (sztRet < 0)
+    size_t sztRet = fwrite(m_szFmtRes, 1, iLen, pstFile);
+    if (sztRet != (size_t)iLen)
     {
         std::cout << "write error: " << sztRet << std::endl;
     }
-    // 定时flush
+
+    fflush(pstFile);
 }
 
 void RotateAppender::OpenFile()

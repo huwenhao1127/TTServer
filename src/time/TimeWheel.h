@@ -22,7 +22,7 @@ public:
         m_fnCallBack(m_fnCallBack), 
         m_bRepeated(m_bRepeated)
     {}
-    ~Timer(){ std::cout << " timer clear" << std::endl;}
+    ~Timer(){}
     typedef std::shared_ptr<Timer> ptr;
 
     /**
