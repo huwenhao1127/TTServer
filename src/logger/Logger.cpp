@@ -7,9 +7,54 @@
  * @Description: 这是默认设置,请设置`customMade`, 打开koroFileHeader查看配置 进行设置: https://github.com/OBKoro1/koro1FileHeader/wiki/%E9%85%8D%E7%BD%AE
  */
 #include "Logger.h"
+#include "FileAppender.h"
+#include "RotateAppender.h"
+#include "StdoutAppender.h"
 
 namespace tts
 {
+
+Logger::Logger(const std::string& sLoggerName /* = "root" */, 
+               EnmLoggerLevel eLevel /* = NONE */, 
+               int iAppender /* = LOGGER_APPENDER_ROTATE */, 
+               const char* szPattern /* = nullptr */,
+               const char* szFileName /* = nullptr */,
+               const char* szLogDir /* = nullptr */,
+               uint64_t ullMaxFileSize /* = 100 * 1024 * 1024 */, 
+               int iMaxFileNum /* = 10 */) : 
+    m_sName(sLoggerName),
+    m_eLevel(eLevel)
+{
+    if (iAppender & LOGGER_APPENDER_FILE && nullptr != szFileName)
+    {
+        tts::FileAppender::ptr ptrFileAppender(new tts::FileAppender(szFileName));
+        if (nullptr != szPattern)
+        {
+            ptrFileAppender->GetFormatter().SetPattern(szPattern);
+        }
+        AddAppender(ptrFileAppender);
+    }
+
+    if (iAppender & LOGGER_APPENDER_ROTATE && nullptr != szLogDir && nullptr != szFileName)
+    {
+        tts::RotateAppender::ptr ptrRotateAppender(new tts::RotateAppender(szLogDir, szFileName, ullMaxFileSize, iMaxFileNum));
+        if (nullptr != szPattern)
+        {
+            ptrRotateAppender->GetFormatter().SetPattern(szPattern);
+        }
+        AddAppender(ptrRotateAppender);
+    }
+
+    if (iAppender & LOGGER_APPENDER_STDOUT)
+    {
+        tts::StdoutAppender::ptr ptrStdoutAppender(new tts::StdoutAppender());
+        if (nullptr != szPattern)
+        {
+            ptrStdoutAppender->GetFormatter().SetPattern(szPattern);
+        }
+        AddAppender(ptrStdoutAppender);
+    }
+}
 
 void Logger::Record(EnmLoggerLevel eLevel, const STLogRecord& stOneRecord)
 {

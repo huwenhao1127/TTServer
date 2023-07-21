@@ -68,6 +68,7 @@ set(TIME_TEST_BIN_SRC
     src/test/time_test.cpp
     src/time/Now.cpp
     src/time/TimeWheel.cpp
+    src/base/BaseThread.cpp
     )
 add_executable(time_test ${TIME_TEST_BIN_SRC})
 # 添加头文件搜索路径
@@ -95,8 +96,22 @@ add_dependencies(logger_test TTServer)
 # 连接动态链接库
 target_link_libraries(logger_test TTServer)
 
-
 # 设置输出路径
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
 SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)
 
+# -------------------------------------
+# # 线程功能测试
+# set(THREAD_TEST_BIN_SRC  
+#     src/test/thread_test.cpp
+#     src/base/BaseThread.cpp
+#     )
+# add_executable(thread_test ${LOGGER_TEST_BIN_SRC})
+# # 添加头文件搜索路径
+# target_include_directories(thread_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
+# target_include_directories(thread_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
+# target_include_directories(thread_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
+
+# # 设置输出路径
+# SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
+# SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)

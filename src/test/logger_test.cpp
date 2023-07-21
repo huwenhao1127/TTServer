@@ -3,10 +3,12 @@
 
 int main()
 {
-    tts::Logger::ptr ptrLogger(new tts::Logger("LOGGER1", tts::EnmLoggerLevel::ERROR));
-
-    tts::RotateAppender::ptr ptrRotateAppender(new tts::RotateAppender("/home/wenhowhu/TTServer/log", "log", 100 * 1024 * 1024, 10));
-    ptrLogger->AddAppender(ptrRotateAppender);
+    tts::Logger::ptr ptrLogger(new tts::Logger("LOGGER1", 
+                                tts::EnmLoggerLevel::ERROR, 
+                                LOGGER_APPENDER_ROTATE,
+                                nullptr,
+                                "log",
+                                "/home/wenhowhu/TTServer/log"));
 
     size_t cnt = 1000000;
     clock_t start, end;

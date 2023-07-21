@@ -13,8 +13,6 @@
 #include "RotateAppender.h"
 #include "LoggerCommDef.h"
 
-namespace tts {
-
 #define LOG_DBG(logger, msg)        \
 do                                  \
 {                                   \
@@ -33,15 +31,25 @@ do                                  \
     logger->Error(stRecord);        \
 }   while(0)                        \
 
+namespace tts {
+
+#define LOGGER_APPENDER_FILE            (1 << 1)
+#define LOGGER_APPENDER_ROTATE          (1 << 2)
+#define LOGGER_APPENDER_STDOUT          (1 << 3)
+
 class Logger
 {
 public:
     typedef std::shared_ptr<Logger> ptr;
 
-    Logger(const std::string& sLoggerName = "root", EnmLoggerLevel eLevel = NONE) : 
-        m_sName(sLoggerName),
-        m_eLevel(eLevel)
-    {}
+    Logger(const std::string& sLoggerName = "root", 
+           EnmLoggerLevel eLevel = NONE, 
+           int iAppender = LOGGER_APPENDER_ROTATE, 
+           const char* szPattern = nullptr,
+           const char* szFileName = nullptr,
+           const char* szLogDir = nullptr,
+           uint64_t ullMaxFileSize = 100 * 1024 * 1024, 
+           int iMaxFileNum = 10);
     ~Logger() {}
 
 public:

@@ -73,7 +73,8 @@ public:
     /**
      * @brief 获取日志格式
      */
-    const std::string& getPattern() const { return m_sFormatter;}
+    const std::string& GetPattern() const { return m_sFormatter;}
+    void SetPattern(const std::string& sPattern) {m_sFormatter = sPattern;}
 
 public:
     /**

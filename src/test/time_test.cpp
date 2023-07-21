@@ -4,7 +4,12 @@
 #include "Logger.h"
 using namespace std;
 
-static tts::Logger::ptr ptrLogger(new tts::Logger("LOGGER1", tts::EnmLoggerLevel::ERROR));
+static tts::Logger::ptr ptrLogger(new tts::Logger("LOGGER1", 
+                                tts::EnmLoggerLevel::ERROR, 
+                                LOGGER_APPENDER_ROTATE + LOGGER_APPENDER_STDOUT,
+                                nullptr,
+                                "log",
+                                "/home/wenhowhu/TTServer/log"));
 
 void CallBack(const std::string& sInfo)
 {
@@ -14,10 +19,6 @@ void CallBack(const std::string& sInfo)
 
 int main()
 {
-    tts::RotateAppender::ptr ptrRotateAppender(new tts::RotateAppender("/home/wenhowhu/TTServer/log", "log", 100 * 1024 * 1024, 10));
-    ptrLogger->AddAppender(ptrRotateAppender);
-    tts::StdoutAppender::ptr ptrStdoutAppender(new tts::StdoutAppender());
-    ptrLogger->AddAppender(ptrStdoutAppender);
     Now::Update();
 
     TimeWheel::ptr poTimeWheel(new TimeWheel(1000, 1));
