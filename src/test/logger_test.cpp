@@ -15,12 +15,10 @@ int main()
     start = clock();
     for (size_t i = 0; i < cnt; i++)
     {
-        LOG_DBG(ptrLogger, std::to_string(i).c_str());
+        LOG_DBG_FMT(ptrLogger, "test: {}", std::to_string(i).c_str());
     }
     end = clock();
     float time = (float)(end - start) / CLOCKS_PER_SEC;
-    std::cout << "cnt: " << cnt << std::endl;
-    std::cout << "time(s): " << time << std::endl;
-    std::cout << "speed: " << cnt / time << std::endl;
+    LOG_DBG_FMT(ptrLogger, "cnt[{}] time[{}] speed[{}]", cnt, time, (cnt / time));
     return 0;
 }

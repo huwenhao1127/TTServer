@@ -12,22 +12,25 @@
 #include "StdoutAppender.h"
 #include "RotateAppender.h"
 #include "LoggerCommDef.h"
+#include "format.h"
 
-#define LOG_DBG(logger, msg)        \
+#define LOG_DBG_FMT(logger, _fmt, _args...)        \
 do                                  \
 {                                   \
     timeval tVal;                   \
     gettimeofday(&tVal, nullptr);   \
-    tts::STLogRecord stRecord{tVal, __FILE__, __LINE__, 0, 0, "", __FUNCTION__, msg};   \
+    std::string sMsgFmt = fmt::format(FMT_STRING(_fmt), ##_args);                                   \
+    tts::STLogRecord stRecord{tVal, __FILE__, __LINE__, 0, 0, "", __FUNCTION__, sMsgFmt.c_str()};   \
     logger->Debug(stRecord);        \
 }   while(0)                        \
 
-#define LOG_ERR(logger, msg)        \
+#define LOG_ERR_FMT(logger, _fmt, _args...)        \
 do                                  \
 {                                   \
     timeval tVal;                   \
     gettimeofday(&tVal, nullptr);   \
-    tts::STLogRecord stRecord{tVal, __FILE__, __LINE__, 0, 0, "", __FUNCTION__, msg};   \
+    std::string sMsgFmt = fmt::format(FMT_STRING(_fmt), ##_args);                                   \
+    tts::STLogRecord stRecord{tVal, __FILE__, __LINE__, 0, 0, "", __FUNCTION__, sMsgFmt.c_str()};   \
     logger->Error(stRecord);        \
 }   while(0)                        \
 

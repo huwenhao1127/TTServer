@@ -53,33 +53,37 @@ set(TTSEVER_SRC
     src/logger/Appender/BaseAppender.cpp
     src/logger/Appender/RotateAppender.cpp
     )
-# # 生成动态链接库
+# 生成动态链接库
 add_library(TTServer SHARED ${TTSEVER_SRC})
-# # 添加头文件搜索路径
+# 连接fmt库
+add_subdirectory(run/lib/fmt EXCLUDE_FROM_ALL)
+target_link_libraries(TTServer fmt-header-only)
+# 添加头文件搜索路径
 target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
 target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
 target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
+target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/include/fmt")
 
 
 # 生成可执行文件
 # ------------------------------------------
 # 时间轮测试
-set(TIME_TEST_BIN_SRC  
-    src/test/time_test.cpp
-    src/time/Now.cpp
-    src/time/TimeWheel.cpp
-    src/base/BaseThread.cpp
-    )
-add_executable(time_test ${TIME_TEST_BIN_SRC})
-# 添加头文件搜索路径
-target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/time")
-target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
-target_include_directories(time_test PUBLIC  "${PROJECT_SOURCE_DIR}/src/logger")
-target_include_directories(time_test PUBLIC  "${PROJECT_SOURCE_DIR}/src/logger/Appender")
-# 设置依赖，编译logger_test前先生成动态链接库
-add_dependencies(time_test TTServer)
-# 连接动态链接库
-target_link_libraries(time_test TTServer)
+# set(TIME_TEST_BIN_SRC  
+#     src/test/time_test.cpp
+#     src/time/Now.cpp
+#     src/time/TimeWheel.cpp
+#     src/base/BaseThread.cpp
+#     )
+# add_executable(time_test ${TIME_TEST_BIN_SRC})
+# # 添加头文件搜索路径
+# target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/time")
+# target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
+# target_include_directories(time_test PUBLIC  "${PROJECT_SOURCE_DIR}/src/logger")
+# target_include_directories(time_test PUBLIC  "${PROJECT_SOURCE_DIR}/src/logger/Appender")
+# # 设置依赖，编译logger_test前先生成动态链接库
+# add_dependencies(time_test TTServer)
+# # 连接动态链接库
+# target_link_libraries(time_test TTServer)
 
 # -------------------------------------
 # logger功能测试
