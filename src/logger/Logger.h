@@ -14,6 +14,38 @@
 #include "LoggerCommDef.h"
 #include "format.h"
 
+#define CHECK_IF_PARAM_NULL(logger, _param, _ret)                   \
+do                                                                  \
+{                                                                   \
+    if (nullptr == _param)                                          \
+    {                                                               \
+        LOG_ERR_FMT(logger, " param is null. return {}", _ret);     \
+        return _ret;                                                \
+    }                                                               \
+} while(0)                                                          \
+
+#define CHECK_IF_PARAM_NULL_CONTINUE(logger, _param)                \
+do                                                                  \
+{                                                                   \
+    if (nullptr == _param)                                          \
+    {                                                               \
+        LOG_ERR_FMT(logger, " param is null, continue");            \
+        continue;                                                   \
+    }                                                               \
+} while(0)                                                          \
+
+
+#define CHECK_PARAM_NOT_ZERO(logger, _param,  _ret)                 \
+do                                                                  \
+{                                                                   \
+    if (0 != _param)                                                \
+    {                                                               \
+        LOG_ERR_FMT(logger, " param is not zero. return {}", _ret); \
+        return _ret;                                                \
+    }                                                               \
+} while(0)                                                          \
+
+
 #define LOG_DBG_FMT(logger, _fmt, _args...)        \
 do                                  \
 {                                   \

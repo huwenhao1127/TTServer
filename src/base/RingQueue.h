@@ -1,3 +1,12 @@
+/**
+ * @file RingQueue.h
+ * @author huwenhao ()
+ * @brief 无锁环形队列
+ * @date 2023-07-27
+ * 
+ * @copyright Copyright (c) 2023
+ * 
+ */
 #pragma once
 #include "Logger.h"
 
@@ -12,19 +21,32 @@ static tts::Logger::ptr ptrLogger(new tts::Logger("RingQueue",
 
 struct RingQueueDataHead
 {
-    size_t ulDataLen;
-    size_t ulDataStart;
+    uint32_t ulDataLen;   // 数据长度
 };
 
 class RingQueue
 {
 public:
-    RingQueue(size_t ulDataBufSize);
+    RingQueue(uint32_t ulDataBufSize);
     ~RingQueue();
+    void Debug();
 
-    int Pop(void* pDataBuf, RingQueueDataHead& stDataHead);
+    /**
+     * @brief 消费数据
+     * 
+     * @param pDataBuf  [out] 数据地址
+     * @return uint32_t 数据大小
+     */
+    uint32_t Pop(char* pData);
 
-    int Push(void* pData, size_t ulDataLen);
+    /**
+     * @brief 添加数据
+     * 
+     * @param pData     数据
+     * @param ulDataLen 数据大小
+     * @return int      0succ
+     */
+    int Push(char* pData, uint32_t ulDataLen);
 
 private:
     /**
@@ -32,12 +54,27 @@ private:
      * 
      * @return size_t 
      */
-    size_t RemainingSpace();
+    inline uint32_t RemainingSpace() {return m_ulDataBufSize - m_ulHead + m_ulTail;}
+
+    /**
+     * @brief 写数据（该接口只负责写数据，外部调用需要判断buf容量是否足够）
+     * 
+     * @param pData 待写入数据地址
+     * @param ulDataLen 数据大小
+     */
+    void WriteData(char* pData, uint32_t ulDataLen);
+
+    /**
+     * @brief 读数据
+     * 
+     * @param pData [out] 数据读入地址
+     * @param dwDataLen 需要读入的数据大小
+     */
+    void ReadData(char* pData, uint32_t dwDataLen);
 
 private:
-    void* m_pDataBuf;             // 数据区
-    size_t m_ulDataBufSize;       // 数据区总大小
-    size_t m_ulHead;              // 队列头指针
-    size_t m_ulTail;              // 队列尾指针
-    bool m_bSameCircle;           // 头尾是否在同一圈
+    char* m_pDataBuf;             // 数据区
+    uint32_t m_ulDataBufSize;     // 数据区总大小
+    uint32_t m_ulHead;            // 队列头指针
+    uint32_t m_ulTail;            // 队列尾指针
 };

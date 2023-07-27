@@ -64,7 +64,6 @@ target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
 target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
 target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/include/fmt")
 
-
 # 生成可执行文件
 # ------------------------------------------
 # 时间轮测试
@@ -87,22 +86,22 @@ target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/in
 
 # -------------------------------------
 # logger功能测试
-set(LOGGER_TEST_BIN_SRC  
-    src/test/logger_test.cpp
-    )
-add_executable(logger_test ${LOGGER_TEST_BIN_SRC})
-# 添加头文件搜索路径
-target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
-target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
-target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
-# 设置依赖，编译logger_test前先生成动态链接库
-add_dependencies(logger_test TTServer)
-# 连接动态链接库
-target_link_libraries(logger_test TTServer)
+# set(LOGGER_TEST_BIN_SRC  
+#     src/test/logger_test.cpp
+#     )
+# add_executable(logger_test ${LOGGER_TEST_BIN_SRC})
+# # 添加头文件搜索路径
+# target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
+# target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
+# target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
+# # 设置依赖，编译logger_test前先生成动态链接库
+# add_dependencies(logger_test TTServer)
+# # 连接动态链接库
+# target_link_libraries(logger_test TTServer)
 
 # 设置输出路径
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)
+# SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
+# SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)
 
 # -------------------------------------
 # # 线程功能测试
@@ -119,3 +118,22 @@ SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)
 # # 设置输出路径
 # SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
 # SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)
+
+# -------------------------------------
+# 环形无锁对垒测试
+set(RING_QUEUE_TEST_BIN_SRC  
+    src/test/ring_queue_test.cpp
+    src/base/RingQueue.cpp
+    )
+add_executable(ring_queue_test ${RING_QUEUE_TEST_BIN_SRC})
+# 添加头文件搜索路径
+target_include_directories(ring_queue_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
+target_include_directories(ring_queue_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
+target_include_directories(ring_queue_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
+# 设置依赖，编译logger_test前先生成动态链接库
+add_dependencies(ring_queue_test TTServer)
+# 连接动态链接库
+target_link_libraries(ring_queue_test TTServer)
+# 设置输出路径
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)
