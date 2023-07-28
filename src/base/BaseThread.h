@@ -45,6 +45,19 @@ public:
     int Stop();
 
     /**
+     * @brief join
+     * 
+     */
+    void Join();
+
+    /**
+     * @brief detach
+     * 
+     */
+    void Detach();
+
+private:
+    /**
      * @brief idle
      * 
      * @return int 
@@ -56,49 +69,48 @@ public:
      * 
      * @return int 
      */
-    virtual int Init() = 0; 
+    virtual int Init() {return 0;} 
 
     /**
      * @brief 主循环内执行
      * 
      * @return int 
      */
-    virtual int Proc() = 0;
+    virtual int Proc() {return 0;} 
 
     /**
      * @brief 主循环内Tick
      * 
      * @return int 
      */
-    virtual int Tick() = 0;
+    virtual int Tick() {return 0;} 
 
     /**
      * @brief 主循环内1sTick
      * 
      * @return int 
      */
-    virtual int Tick1S() = 0;
+    virtual int Tick1S() {return 0;} 
 
     /**
      * @brief 主循环内5sTick
      * 
      * @return int 
      */
-    virtual int Tick5S() = 0;
-
+    virtual int Tick5S() {return 0;} 
     /**
      * @brief 主循环内10sTick
      * 
      * @return int 
      */
-    virtual int Tick10S() = 0;
+    virtual int Tick10S() {return 0;} 
 
     /**
      * @brief 主循环内20sTick
      * 
      * @return int 
      */
-    virtual int Tick20S() = 0;
+    virtual int Tick20S() {return 0;} 
 
 protected:
     /**

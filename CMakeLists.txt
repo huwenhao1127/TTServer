@@ -42,10 +42,21 @@ message(STATUS "GIT_HASH: ${GIT_HASH}")
 message(STATUS "GIT_TIME: ${GIT_TIME}")
 message(STATUS "GIT_DES: ${GIT_DES}")
 
+# 添加全局头文件搜索路径
+include_directories("${PROJECT_SOURCE_DIR}/src/time")
+include_directories("${PROJECT_SOURCE_DIR}/src/base")
+include_directories("${PROJECT_SOURCE_DIR}/src/logger")
+include_directories("${PROJECT_SOURCE_DIR}/src/logger/Appender")
+
+# 设置可执行文件输出路径
+SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
+# 设置动态连接库输出路径
+SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/so)
+
 # 编译动态连接库
 # -----------------------------------------
 # 源文件列表
-set(TTSEVER_SRC
+set(LOGGER_SRC
     src/logger/Logger.cpp
     src/logger/Formatter.cpp
     src/logger/Appender/StdoutAppender.cpp
@@ -54,15 +65,12 @@ set(TTSEVER_SRC
     src/logger/Appender/RotateAppender.cpp
     )
 # 生成动态链接库
-add_library(TTServer SHARED ${TTSEVER_SRC})
+add_library(TTLogger SHARED ${LOGGER_SRC})
 # 连接fmt库
 add_subdirectory(run/lib/fmt EXCLUDE_FROM_ALL)
-target_link_libraries(TTServer fmt-header-only)
-# 添加头文件搜索路径
-target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
-target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
-target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
-target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/include/fmt")
+target_link_libraries(TTLogger fmt-header-only)
+# 添加fmt库头文件
+target_include_directories(TTLogger PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/include/fmt")
 
 # 生成可执行文件
 # ------------------------------------------
@@ -77,8 +85,8 @@ target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/in
 # # 添加头文件搜索路径
 # target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/time")
 # target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
-# target_include_directories(time_test PUBLIC  "${PROJECT_SOURCE_DIR}/src/logger")
-# target_include_directories(time_test PUBLIC  "${PROJECT_SOURCE_DIR}/src/logger/Appender")
+# target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
+# target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
 # # 设置依赖，编译logger_test前先生成动态链接库
 # add_dependencies(time_test TTServer)
 # # 连接动态链接库
@@ -120,20 +128,16 @@ target_include_directories(TTServer PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/in
 # SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)
 
 # -------------------------------------
-# 环形无锁对垒测试
+# 环形无锁队列测试
 set(RING_QUEUE_TEST_BIN_SRC  
     src/test/ring_queue_test.cpp
     src/base/RingQueue.cpp
+    src/base/BaseThread.cpp
+    src/time/Now.cpp
     )
 add_executable(ring_queue_test ${RING_QUEUE_TEST_BIN_SRC})
-# 添加头文件搜索路径
-target_include_directories(ring_queue_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
-target_include_directories(ring_queue_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
-target_include_directories(ring_queue_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
+
 # 设置依赖，编译logger_test前先生成动态链接库
-add_dependencies(ring_queue_test TTServer)
+add_dependencies(ring_queue_test TTLogger)
 # 连接动态链接库
-target_link_libraries(ring_queue_test TTServer)
-# 设置输出路径
-SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
-SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/src)
+target_link_libraries(ring_queue_test TTLogger)

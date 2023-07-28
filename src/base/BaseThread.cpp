@@ -57,10 +57,29 @@ int BaseThread::Start()
 int BaseThread::Stop()
 {
     m_bActive = false;
-    m_pThread->join();
-    delete m_pThread;
-    m_pThread = nullptr;
+    if (nullptr != m_pThread)
+    {
+        m_pThread->join();
+        delete m_pThread;
+        m_pThread = nullptr;
+    }
     return 0;
+}
+
+void BaseThread::Join()
+{
+    if (nullptr != m_pThread)
+    {
+        m_pThread->join();
+    }
+}
+
+void BaseThread::Detach()
+{
+    if (nullptr != m_pThread)
+    {
+        m_pThread->detach();
+    }
 }
 
 void BaseThread::Run()

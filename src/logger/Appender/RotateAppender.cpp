@@ -9,10 +9,10 @@ namespace tts
 
 RotateAppender::~RotateAppender()
 {
-    if (nullptr != pstFile)
+    if (nullptr != m_pstFile)
     {
-        fclose(pstFile);
-        pstFile = nullptr;
+        fclose(m_pstFile);
+        m_pstFile = nullptr;
     }
 } 
 
@@ -23,19 +23,19 @@ void RotateAppender::Append(EnmLoggerLevel eLevel, Logger& stLogger, const STLog
     strncpy(m_szFmtRes, strRecord.c_str(), MAX_FMT_CONTENT_SIZE);
     int iLen = strRecord.size() >= MAX_FMT_CONTENT_SIZE ? MAX_FMT_CONTENT_SIZE : strRecord.size();
 
-    if (nullptr == pstFile)
+    if (nullptr == m_pstFile)
     {
-        std::cout << "file error" << std::endl;
+        std::cout << "file error: " << m_sCurFileName.c_str() << std::endl;
         return;
     }
 
-    size_t sztRet = fwrite(m_szFmtRes, 1, iLen, pstFile);
+    size_t sztRet = fwrite(m_szFmtRes, 1, iLen, m_pstFile);
     if (sztRet != (size_t)iLen)
     {
         std::cout << "write error: " << sztRet << std::endl;
     }
 
-    fflush(pstFile);
+    fflush(m_pstFile);
 }
 
 void RotateAppender::OpenFile()
@@ -44,23 +44,23 @@ void RotateAppender::OpenFile()
     if (m_iCurFileID > m_iMaxFileNum)
     {
         return;
-    }   
+    }
     // 目录
     if (access(m_sDirName.c_str(), 0) != 0)
     {
         mode_t modeOld = umask(0);
-        mkdir(m_sDirName.c_str(), S_IRUSR | S_IRWXG);
+        mkdir(m_sDirName.c_str(), S_IRWXU);
         umask(modeOld);
     }
-    if (nullptr == pstFile)
+    if (nullptr == m_pstFile)
     {
         // 更新追加方式打开文件
-        pstFile = fopen(m_sCurFileName.c_str(), "ab+");
-        if (nullptr == pstFile)
+        m_pstFile = fopen(m_sCurFileName.c_str(), "ab+");
+        if (nullptr == m_pstFile)
         {
             // 不存在就新建
-            pstFile = fopen(m_sCurFileName.c_str(), "w");
-            if (nullptr == pstFile)
+            m_pstFile = fopen(m_sCurFileName.c_str(), "w");
+            if (nullptr == m_pstFile)
             {
                 return;
             }
@@ -76,9 +76,9 @@ void RotateAppender::OpenFile()
         m_sCurFileName = m_sDirName + "/" + m_sLogName + "." + std::to_string(m_iCurFileID);
 
         // 重新打开
-        fclose(pstFile);
-        pstFile = fopen(m_sCurFileName.c_str(), "wb+");
-        if (nullptr == pstFile)
+        fclose(m_pstFile);
+        m_pstFile = fopen(m_sCurFileName.c_str(), "wb+");
+        if (nullptr == m_pstFile)
         {
             return;
         }

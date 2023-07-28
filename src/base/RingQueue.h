@@ -1,7 +1,7 @@
 /**
  * @file RingQueue.h
  * @author huwenhao ()
- * @brief 无锁环形队列
+ * @brief 无锁环形队列（单消费者单生产者无锁）
  * @date 2023-07-27
  * 
  * @copyright Copyright (c) 2023
@@ -17,7 +17,7 @@ static tts::Logger::ptr ptrLogger(new tts::Logger("RingQueue",
                                 LOGGER_APPENDER_ROTATE + LOGGER_APPENDER_STDOUT,
                                 nullptr,
                                 "rqlog",
-                                "/home/wenhowhu/TTServer/rqlog"));
+                                "/home/wenhowhu/TTServer/log/rqlog"));
 
 struct RingQueueDataHead
 {
@@ -56,6 +56,8 @@ private:
      */
     inline uint32_t RemainingSpace() {return m_ulDataBufSize - m_ulHead + m_ulTail;}
 
+    inline bool Empty() {return m_ulHead == m_ulTail;}
+
     /**
      * @brief 写数据（该接口只负责写数据，外部调用需要判断buf容量是否足够）
      * 
@@ -75,6 +77,8 @@ private:
 private:
     char* m_pDataBuf;             // 数据区
     uint32_t m_ulDataBufSize;     // 数据区总大小
-    uint32_t m_ulHead;            // 队列头指针
-    uint32_t m_ulTail;            // 队列尾指针
+    uint32_t m_ulHead;            // 队列头指针（完整写完头和数据后才会更新）
+    uint32_t m_ulTail;            // 队列尾指针（完整读完头和数据后才会更新）
+    uint32_t m_ulWriteHead;       // 队列写数据时的指针
+    uint32_t m_ulReadTail;        // 队列读数据时的指针
 };

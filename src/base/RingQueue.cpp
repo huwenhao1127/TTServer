@@ -26,6 +26,8 @@ RingQueue::RingQueue(uint32_t ulDataBufSize)
     m_pDataBuf = (char*)malloc(ulDataBufSize);
     m_ulHead = 0;
     m_ulTail = 0;
+    m_ulWriteHead = 0;
+    m_ulReadTail = 0;
 }
 
 RingQueue::~RingQueue()
@@ -37,11 +39,11 @@ RingQueue::~RingQueue()
 int RingQueue::Push(char* pData, uint32_t ulDataLen)
 {
     RingQueueDataHead stHead = {ulDataLen};
-    uint32_t dwCurSize = RemainingSpace();
+    uint32_t ulCurSize = RemainingSpace();
     
-    if (ulDataLen + sizeof(stHead) > dwCurSize)
+    if (ulDataLen + sizeof(stHead) > ulCurSize)
     {
-        LOG_ERR_FMT(ptrLogger, " write data fail. cur size[{}] data size[{}]", dwCurSize, ulDataLen);
+        LOG_ERR_FMT(ptrLogger, " write data fail. cur size[{}] data size[{}]", ulCurSize, ulDataLen);
         return -1;
     }
 
@@ -49,39 +51,49 @@ int RingQueue::Push(char* pData, uint32_t ulDataLen)
     WriteData((char*)&stHead, sizeof(stHead));
     // 写数据
     WriteData(pData, ulDataLen);
+
+    // 完成数据写入后更新头指针
+    m_ulHead = m_ulWriteHead;
     return 0;
 }
 
 void RingQueue::WriteData(char* pData, uint32_t ulDataLen)
 {
     // (m_ulHead & (m_ulDataBufSize - 1))高效取模，计算头指针真实位置
-    uint32_t dwCurHead = m_ulHead & (m_ulDataBufSize - 1);
+    uint32_t ulCurHead = m_ulWriteHead & (m_ulDataBufSize - 1);
 
     // 拷贝到数组尾部 
-    uint32_t dwLenTail = min(ulDataLen, m_ulDataBufSize - dwCurHead);
-    memcpy(m_pDataBuf + dwCurHead, pData, dwLenTail);
+    uint32_t ulLenTail = min(ulDataLen, m_ulDataBufSize - ulCurHead);
+    memcpy(m_pDataBuf + ulCurHead, pData, ulLenTail);
 
     // 拷贝到数组头部
-    uint32_t dwLenHead = ulDataLen - dwLenTail;
-    memcpy(m_pDataBuf, pData + dwLenTail, dwLenHead);
+    uint32_t ulLenHead = ulDataLen - ulLenTail;
+    memcpy(m_pDataBuf, pData + ulLenTail, ulLenHead);
     
-    m_ulHead += ulDataLen;
+    m_ulWriteHead += ulDataLen;
 }
 
 uint32_t RingQueue::Pop(char* pData)
 {
+    if (Empty())
+    {
+        return 0;
+    }
+
     // 读数据头
     RingQueueDataHead stHead = {0};
     ReadData((char*)&stHead, sizeof(stHead));
-
     // 读数据
     ReadData(pData, stHead.ulDataLen);
+
+    // 完成数据读出后设置尾指针
+    m_ulTail = m_ulReadTail;
     return stHead.ulDataLen;
 }
 
 void RingQueue::ReadData(char* pData, uint32_t dwDataLen)
 {
-    uint32_t dwCurTail= m_ulTail & (m_ulDataBufSize - 1);
+    uint32_t dwCurTail= m_ulReadTail & (m_ulDataBufSize - 1);
 
     // 拷贝数组尾部数据
     uint32_t dwLenTail = min(dwDataLen, m_ulDataBufSize - dwCurTail);
@@ -90,8 +102,8 @@ void RingQueue::ReadData(char* pData, uint32_t dwDataLen)
     // 拷贝数组头部数据
     uint32_t dwLenHead = dwDataLen - dwLenTail;
     memcpy(pData + dwLenTail, m_pDataBuf, dwLenHead);
-
-    m_ulTail += dwDataLen;
+    
+    m_ulReadTail += dwDataLen;
 }
 
 void RingQueue::Debug()

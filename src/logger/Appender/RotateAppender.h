@@ -18,7 +18,7 @@ public:
           m_iMaxFileNum(iMaxFileNum),
           m_iCurFileID(1),
           m_sCurFileName(m_sDirName + "/" + m_sLogName + "." + std::to_string(m_iCurFileID)),
-          pstFile(nullptr),
+          m_pstFile(nullptr),
           m_iFlush(0)
           {}
 
@@ -40,7 +40,7 @@ private:
     int m_iMaxFileNum;              // 最大文件数
     int m_iCurFileID;               // 当前操作的文件idx
     std::string m_sCurFileName;     // 当前操作的文件名
-    FILE* pstFile;                  // 当前操作的文件
+    FILE* m_pstFile;                  // 当前操作的文件
 
     int m_iFlush;                   // 
 };
