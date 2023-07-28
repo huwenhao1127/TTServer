@@ -1,0 +1,7 @@
+/log/*
+/bin/*
+/build/*
+/lib/*
+/.vscode/*
+/src/version.h
+/run/so/*
