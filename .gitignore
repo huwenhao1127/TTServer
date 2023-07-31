@@ -5,3 +5,4 @@
 /.vscode/*
 /src/version.h
 /run/so/*
+/tools/perf/out/*
