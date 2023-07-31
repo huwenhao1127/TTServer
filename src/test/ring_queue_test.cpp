@@ -4,7 +4,9 @@
 #include <random>
 #include <mutex>
 
-static RingQueue oQueue(50);
+// 读写速度
+int iSpeed = 10000;
+static RingQueue oQueue(100000);
 std::mutex mtx;
 
 class ProducerThread : public BaseThread
@@ -13,11 +15,14 @@ public:
     ProducerThread(const char* szName) : BaseThread(szName) {}
     virtual ~ProducerThread() {}
 private:
-     int Tick()
+    int Tick1S()
     {
-        int iRand = std::rand();
-        oQueue.Push((char*)&iRand, sizeof(iRand));
-        std::cout << "producer: " << iRand << std::endl;
+        for (int i = 0; i < iSpeed; i++)
+        {
+            int iRand = std::rand();
+            oQueue.Push((char*)&iRand, sizeof(iRand));
+            // std::cout << "producer: " << iRand << std::endl;
+        }
         return 0;
     }
 };
@@ -28,11 +33,14 @@ public:
     ComsumerThread(const char* szName)  : BaseThread(szName) {}
     virtual ~ComsumerThread() {}
 private:
-    int Tick1S()
+    int Tick()
     {
-        char szRes[4];
-        oQueue.Pop(szRes);
-        std::cout << "consumer: " << (*(int*)szRes) << std::endl;
+        for (int i = 0; i < int(iSpeed * 0.2); i++)
+        {
+            char szRes[4];
+            oQueue.Pop(szRes);
+            // std::cout << "consumer: " << (*(int*)szRes) << std::endl;
+        }
         return 0;
     }
 };

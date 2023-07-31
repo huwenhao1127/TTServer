@@ -9,6 +9,7 @@
  */
 #pragma once
 #include "Logger.h"
+#include <atomic>
 
 #define MAX_RING_QUEUE_DATA_SIZE 10*1024*1024
 
@@ -75,10 +76,12 @@ private:
     void ReadData(char* pData, uint32_t dwDataLen);
 
 private:
-    char* m_pDataBuf;             // 数据区
-    uint32_t m_ulDataBufSize;     // 数据区总大小
-    uint32_t m_ulHead;            // 队列头指针（完整写完头和数据后才会更新）
-    uint32_t m_ulTail;            // 队列尾指针（完整读完头和数据后才会更新）
-    uint32_t m_ulWriteHead;       // 队列写数据时的指针
-    uint32_t m_ulReadTail;        // 队列读数据时的指针
+    char* m_pDataBuf;                       // 数据区
+    volatile uint32_t m_ulDataBufSize;      // 数据区总大小
+    volatile uint32_t m_ulHead;             // 队列头指针（完整写完头和数据后才会更新）
+    volatile uint32_t m_ulTail;             // 队列尾指针（完整读完头和数据后才会更新）
+    volatile uint32_t m_ulWriteHead;        // 队列写数据时的指针
+    volatile uint32_t m_ulReadTail;         // 队列读数据时的指针
+    std::atomic<bool> m_bOnWrite;           // 写锁
+    std::atomic<bool> m_bOnRead;            // 读锁
 };

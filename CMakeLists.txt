@@ -8,7 +8,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 # c/c++编译参数
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -lpthread -O3 -fPIC -ggdb -std=c++17 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -lpthread -O3 -fPIC -ggdb -std=c++17 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations -fno-omit-frame-pointer")
 
 # 生成版本信息
 # 添加自定义cmake文件目录
@@ -82,11 +82,6 @@ target_include_directories(TTLogger PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/in
 #     src/base/BaseThread.cpp
 #     )
 # add_executable(time_test ${TIME_TEST_BIN_SRC})
-# # 添加头文件搜索路径
-# target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/time")
-# target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
-# target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
-# target_include_directories(time_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
 # # 设置依赖，编译logger_test前先生成动态链接库
 # add_dependencies(time_test TTServer)
 # # 连接动态链接库
@@ -98,10 +93,6 @@ target_include_directories(TTLogger PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/in
 #     src/test/logger_test.cpp
 #     )
 # add_executable(logger_test ${LOGGER_TEST_BIN_SRC})
-# # 添加头文件搜索路径
-# target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
-# target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
-# target_include_directories(logger_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
 # # 设置依赖，编译logger_test前先生成动态链接库
 # add_dependencies(logger_test TTServer)
 # # 连接动态链接库
@@ -118,10 +109,6 @@ target_include_directories(TTLogger PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/in
 #     src/base/BaseThread.cpp
 #     )
 # add_executable(thread_test ${LOGGER_TEST_BIN_SRC})
-# # 添加头文件搜索路径
-# target_include_directories(thread_test PUBLIC "${PROJECT_SOURCE_DIR}/src/base")
-# target_include_directories(thread_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger")
-# target_include_directories(thread_test PUBLIC "${PROJECT_SOURCE_DIR}/src/logger/Appender")
 
 # # 设置输出路径
 # SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)

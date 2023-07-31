@@ -28,6 +28,8 @@ RingQueue::RingQueue(uint32_t ulDataBufSize)
     m_ulTail = 0;
     m_ulWriteHead = 0;
     m_ulReadTail = 0;
+    m_bOnWrite.store(false);
+    m_bOnRead.store(false);
 }
 
 RingQueue::~RingQueue()
@@ -38,12 +40,22 @@ RingQueue::~RingQueue()
 
 int RingQueue::Push(char* pData, uint32_t ulDataLen)
 {
+    while (true)
+    {
+        if (!m_bOnWrite.load())
+        {
+            m_bOnWrite.store(true);
+            break;
+        }
+    }
+
     RingQueueDataHead stHead = {ulDataLen};
     uint32_t ulCurSize = RemainingSpace();
     
     if (ulDataLen + sizeof(stHead) > ulCurSize)
     {
         LOG_ERR_FMT(ptrLogger, " write data fail. cur size[{}] data size[{}]", ulCurSize, ulDataLen);
+        m_bOnWrite.store(false);
         return -1;
     }
 
@@ -54,12 +66,13 @@ int RingQueue::Push(char* pData, uint32_t ulDataLen)
 
     // 完成数据写入后更新头指针
     m_ulHead = m_ulWriteHead;
+    m_bOnWrite.store(false);
     return 0;
 }
 
 void RingQueue::WriteData(char* pData, uint32_t ulDataLen)
 {
-    // (m_ulHead & (m_ulDataBufSize - 1))高效取模，计算头指针真实位置
+    // (m_ulHead & (m_ulDataBufSize - 1))位运算取模，计算头指针真实位置
     uint32_t ulCurHead = m_ulWriteHead & (m_ulDataBufSize - 1);
 
     // 拷贝到数组尾部 
@@ -75,8 +88,18 @@ void RingQueue::WriteData(char* pData, uint32_t ulDataLen)
 
 uint32_t RingQueue::Pop(char* pData)
 {
+    while (true)
+    {
+        if (!m_bOnRead.load())
+        {
+            m_bOnRead.store(true);
+            break;
+        }
+    }
+
     if (Empty())
     {
+        m_bOnRead.store(false);
         return 0;
     }
 
@@ -88,6 +111,7 @@ uint32_t RingQueue::Pop(char* pData)
 
     // 完成数据读出后设置尾指针
     m_ulTail = m_ulReadTail;
+    m_bOnRead.store(false);
     return stHead.ulDataLen;
 }
 
