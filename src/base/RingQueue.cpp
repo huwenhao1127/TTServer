@@ -70,6 +70,11 @@ int RingQueue::Push(char* pData, uint32_t ulDataLen)
     return 0;
 }
 
+int RingQueue::AllocNewData(char* pData, uint32_t ulDataLen)
+{
+    return 0;
+}
+
 void RingQueue::WriteData(char* pData, uint32_t ulDataLen)
 {
     // (m_ulHead & (m_ulDataBufSize - 1))位运算取模，计算头指针真实位置

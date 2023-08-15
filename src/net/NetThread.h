@@ -13,7 +13,16 @@
 class NetThread : public BaseThread
 {
 public:
+    NetThread() : BaseThread("net thread") {}
+    virtual ~NetThread() {}
 
-private:
+    virtual int Init(); 
 
+    virtual int Proc();
+
+    virtual int Tick();
+
+    virtual int Tick1S();
+
+    virtual int Tick20S();
 };

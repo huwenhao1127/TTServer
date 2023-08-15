@@ -1,8 +1,10 @@
 #include "KcpWrapper.h"
-#include "NetCommdef.h"
+#include "NetCommDef.h"
 #include "NetConnect.h"
 #include "CommDef.h"
 #include <string.h>
+
+char KcpWrapper::s_szLogInfo[128] = {0};
 
 // kcp发送数据回调
 static int KcpOutPut(const char *buf, int len, struct IKCPCB *kcp, void *user)
@@ -63,6 +65,7 @@ int KcpWrapper::Init()
     ikcp_nodelay(&m_ikcp, KCP_CONF_NODELAY, KCP_CONF_UPDATE_INTERVAL, KCP_CONF_FAST_RESEND, KCP_CONF_NOCWND);
 
     LOG_DBG_FMT(ptrNetLogger, "conn[{}] init succ, kcp[{}]", m_oConn.GetConnectID(), GetLogInfo());
+    return 0;
 }
 
 void KcpWrapper::Reclaim()

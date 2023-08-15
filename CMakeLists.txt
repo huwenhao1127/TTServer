@@ -47,6 +47,7 @@ include_directories("${PROJECT_SOURCE_DIR}/src/time")
 include_directories("${PROJECT_SOURCE_DIR}/src/base")
 include_directories("${PROJECT_SOURCE_DIR}/src/logger")
 include_directories("${PROJECT_SOURCE_DIR}/src/logger/Appender")
+include_directories("${PROJECT_SOURCE_DIR}/src/net/")
 
 # 设置可执行文件输出路径
 SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/run/bin)
@@ -116,15 +117,32 @@ target_include_directories(TTLogger PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/in
 
 # -------------------------------------
 # 环形无锁队列测试
-set(RING_QUEUE_TEST_BIN_SRC  
-    src/test/ring_queue_test.cpp
-    src/base/RingQueue.cpp
-    src/base/BaseThread.cpp
-    src/time/Now.cpp
-    )
-add_executable(ring_queue_test ${RING_QUEUE_TEST_BIN_SRC})
+# set(RING_QUEUE_TEST_BIN_SRC  
+#     src/test/ring_queue_test.cpp
+#     src/base/RingQueue.cpp
+#     src/base/BaseThread.cpp
+#     src/time/Now.cpp
+#     )
+# add_executable(ring_queue_test ${RING_QUEUE_TEST_BIN_SRC})
+
+# # 设置依赖，编译logger_test前先生成动态链接库
+# add_dependencies(ring_queue_test TTLogger)
+# # 连接动态链接库
+# target_link_libraries(ring_queue_test TTLogger)
+
+# -------------------------------------
+# 网络线程测试
+# 将目录下的所有源文件保存到变量中
+set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
+file(GLOB SOURCE_FILES "${SOURCE_DIR}/*.cpp" "${SOURCE_DIR}/*.c")
+
+set(NET_SERVER_SOURCE ${PROJECT_SOURCE_DIR}/test/net_server.cpp)
+set(NET_SERVER_SOURCE "${SOURCE_FILES};${NET_SERVER_SOURCE}")
+add_executable(net_server ${NET_SERVER_SOURCE})
 
 # 设置依赖，编译logger_test前先生成动态链接库
-add_dependencies(ring_queue_test TTLogger)
+add_dependencies(net_server TTLogger)
 # 连接动态链接库
-target_link_libraries(ring_queue_test TTLogger)
+target_link_libraries(net_server TTLogger)
+
+

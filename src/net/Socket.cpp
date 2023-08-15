@@ -6,7 +6,7 @@
 #include <netdb.h>
 #include <sys/types.h>
 #include <fcntl.h>
-#include "NetCommdef.h"
+#include "NetCommDef.h"
 #include "Socket.h"
 
 char** localIP(const char* dev)
@@ -43,8 +43,7 @@ char** localIP(const char* dev)
         {
             if (!ioctl(fd,SIOCGIFADDR,(char*)&buf[n]))
             {
-
-                strncpy(tmp_dev_name, buf[n].ifr_name, sizeof(tmp_dev_name));
+                snprintf(tmp_dev_name, sizeof(tmp_dev_name), "%s", buf[n].ifr_name);
                 dev_delimiter_pos = strchr(tmp_dev_name, '.');
                 if (dev_delimiter_pos)
                 {
@@ -124,7 +123,7 @@ int sock_buf(int fd, int size, int flag)
     // cat /proc/sys/net/core/wmem_max  cat /proc/sys/net/core/rmem_max 查看最大最小值
     if (getsockopt(fd, SOL_SOCKET, flag, (char*)&nsize, &n) == 0)
     {
-        if (2 * size != nsize)
+        if ((size_t)(2 * size) != nsize)
         {
             LOG_ERR_FMT(ptrNetLogger, "fd:{} Set Buf size:{} nsize:{} Fail! Please use server/run/tool/fix_socket_buf.sh to Change Max Socket Buf", fd, size, (int)nsize);
             return -1;
@@ -169,7 +168,7 @@ int sock_toaddr(const char* host, unsigned short port, struct sockaddr_in *addr)
     addr->sin_port = htons(port);
 
     struct hostent *host_ent;
-    memset(host_ent, 0, sizeof(hostent));
+    memset(addr, 0, sizeof(*addr));
     if ((host_ent = gethostbyname(host)) != NULL)
     {
         memcpy(&addr->sin_addr, host_ent->h_addr, host_ent->h_length);

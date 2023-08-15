@@ -56,7 +56,7 @@ public:
      */
     void Detach();
 
-private:
+public:
     /**
      * @brief idle
      * 

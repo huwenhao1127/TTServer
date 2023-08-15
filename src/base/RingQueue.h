@@ -49,6 +49,15 @@ public:
      */
     int Push(char* pData, uint32_t ulDataLen);
 
+    /**
+     * @brief 分配新数据块
+     * 
+     * @param pData         [out] 数据块起始地址
+     * @param ulDataLen     数据块长度
+     * @return int 
+     */
+    int AllocNewData(char* pData, uint32_t ulDataLen);
+
 private:
     /**
      * @brief 当前剩余空间

@@ -24,6 +24,16 @@ do                                                                  \
     }                                                               \
 } while(0)                                                          \
 
+#define CHECK_IF_PARAM_NULL_VOID(logger, _param)                    \
+do                                                                  \
+{                                                                   \
+    if (nullptr == _param)                                          \
+    {                                                               \
+        LOG_ERR_FMT(logger, " param is null.");                     \
+        return;                                                     \
+    }                                                               \
+} while(0)                                                          \
+
 #define CHECK_IF_PARAM_NULL_CONTINUE(logger, _param)                \
 do                                                                  \
 {                                                                   \

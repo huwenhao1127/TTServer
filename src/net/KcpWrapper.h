@@ -116,7 +116,7 @@ public:
      * @return true 
      * @return false 
      */
-    inline bool IsDeadLink() const {return -1 == m_ikcp.state;}
+    inline bool IsDeadLink() const {return (-1 == (int)m_ikcp.state);}
 
     /**
      * @brief 业务是否需要收包

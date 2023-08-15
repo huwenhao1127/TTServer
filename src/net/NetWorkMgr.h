@@ -8,14 +8,60 @@
  * 
  */
 #pragma once
+#include <unordered_map>
 #include "Singleton.h"
+#include "NetCommDef.h"
+#include "NetWork.h"
+
 
 class NetWorkMgr : public Singleton<NetWorkMgr>
 {
 public:
+    // key: fd, val: network对象
+    typedef std::unordered_map<int, NetWork::ptr> NetWorkMap;
 
+    NetWorkMgr();
+    ~NetWorkMgr();
+    
+    /**
+     * @brief 初始化
+     * 
+     * @return int 
+     */
+    int Init();
+
+    /**
+     * @brief 监听io事件
+     * 
+     * @return int 
+     */
+    int Proc();
 
 private:
-    
+    /**
+     * @brief 创建网络对象
+     * 
+     * @param sNIC 网卡名
+     * @return NetWork::ptr 
+     */
+    NetWork::ptr CreateNetWork(std::string& sNIC);
 
+    /**
+     * @brief 创建网络对象
+     * 
+     * @param stAddr ip地址
+     * @return NetWork::ptr 
+     */
+    NetWork::ptr CreateNetWork(in_addr_t stAddr);
+
+    /**
+     * @brief 创建socket
+     * 
+     * @param stAddr 
+     * @return int 
+     */
+    int CreateSocket(const struct sockaddr_in& stAddr);
+
+private:
+    NetWorkMap m_mapNetWork;
 };
