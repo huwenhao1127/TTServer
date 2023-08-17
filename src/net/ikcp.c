@@ -818,6 +818,7 @@ int ikcp_input(ikcpcb *kcp, const char *data, long size)
 {
 	IUINT32 prev_una = kcp->snd_una;
 	IUINT32 maxack = 0, latest_ts = 0;
+	IUINT32 max_una = 0;
 	int flag = 0;
 
 	if (ikcp_canlog(kcp, IKCP_LOG_INPUT)) {
@@ -852,6 +853,12 @@ int ikcp_input(ikcpcb *kcp, const char *data, long size)
 		if (cmd != IKCP_CMD_PUSH && cmd != IKCP_CMD_ACK &&
 			cmd != IKCP_CMD_WASK && cmd != IKCP_CMD_WINS) 
 			return -3;
+
+		// 异常检测，记录最大una
+		if (una > max_una)
+		{
+			max_una = una;
+		}
 
 		kcp->rmt_wnd = wnd;
 		ikcp_parse_una(kcp, una);
@@ -961,6 +968,16 @@ int ikcp_input(ikcpcb *kcp, const char *data, long size)
 				kcp->cwnd = kcp->rmt_wnd;
 				kcp->incr = kcp->rmt_wnd * mss;
 			}
+		}
+	}
+
+	// sn异常检测
+	if (_itimediff(max_una, kcp->snd_nxt) > 0)
+	{
+		kcp->state = -2;
+		if (ikcp_canlog(kcp, IKCP_LOG_INPUT))
+		{	
+			ikcp_log(kcp, IKCP_LOG_INPUT, "[RI] conv[%u] snd_nxt[%u] max_una[%u]", kcp->conv, kcp->snd_nxt, max_una);
 		}
 	}
 

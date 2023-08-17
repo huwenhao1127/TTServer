@@ -20,6 +20,13 @@ public:
     NetWork(uint64_t ullID, int iSockFD, const sockaddr_in& stSockAddr);
     ~NetWork();
 
+    /**
+     * @brief 获取ID
+     * 
+     * @return uint64_t 
+     */
+    inline uint64_t GetID() const {return m_ullID;}
+
 public:
     /**
      * @brief 处理udp fd IO事件
@@ -40,7 +47,14 @@ public:
      */
     int SendFinMsg(EnmNetPacketType eType, uint32_t ulConnID, uint8_t bReason, const sockaddr_in& stClientAddr);
 
-private:
+    /**
+     * @brief 创建新的网络包，并加入发送队列
+     * 
+     * @param ulBufferSize 
+     * @return STNetPacket* 
+     */
+    STNetPacket* NewPacket(size_t ulBufferSize);
+
     /**
      * @brief 发送网络数据
      * 
@@ -55,17 +69,82 @@ private:
      */
     int DoIORead();
 
-
+    /**
+     * @brief 处理网络消息
+     * 
+     * @param oMsg 
+     * @param stClientAddr 
+     * @return int 
+     */
     int HandleNetMsg(const NetMsg& oMsg, const sockaddr_in& stClientAddr);
 
+    /**
+     * @brief 处理第一次握手请求
+     * 
+     * @param oMsg 
+     * @param stClientAddr 
+     * @return int 
+     */
     int HandleHandShake1(const NetMsg& oMsg, const sockaddr_in& stClientAddr);
 
+    /**
+     * @brief 处理第二次握手请求
+     * 
+     * @param oMsg 
+     * @param stClientAddr 
+     * @return int 
+     */
     int HandleHandShake2(const NetMsg& oMsg, const sockaddr_in& stClientAddr);
 
+    /**
+     * @brief 处理重连请求
+     * 
+     * @param oMsg 
+     * @param stClientAddr 
+     * @return int 
+     */
     int HandleReconnect(const NetMsg& oMsg, const sockaddr_in& stClientAddr);
 
+    /**
+     * @brief 处理网络数据
+     * 
+     * @param oMsg 
+     * @param stClientAddr 
+     * @return int 
+     */
     int HandleNetData(const NetMsg& oMsg, const sockaddr_in& stClientAddr);
+
+    /**
+     * @brief 将握手包加入发送队列
+     * 
+     * @param stHead 
+     * @param stPacket 
+     * @param stClient 
+     * @return int 
+     */
+    int SendHandShakeMsg(STNetMsgHead& stHead, STHandShakePacket& stPacket, const sockaddr_in& stClient);
+    int SendHandShakeSucc(const STHandShakePacket& stReq, NetConnect& oConn);
+    int SendHandShakeFail(const STHandShakePacket& stReq, const sockaddr_in& stClient, int iReason = 0);
     
+    /**
+     * @brief 发送重连确认包
+     * 
+     * @param stClientAddr 
+     * @param poConn 
+     * @return int 
+     */
+    int SendReconnctAck(const sockaddr_in& stClientAddr, NetConnect* poConn);
+
+    /**
+     * @brief 发送rst包
+     * 
+     * @param bType 
+     * @param ulConnID 
+     * @param bReason 
+     * @param stClientAddr 
+     * @return int 
+     */
+    int SendRstMsg(uint8_t bType, uint32_t ulConnID, const sockaddr_in& stClientAddr);
 
 private:
     uint64_t m_ullID;                       // 网络对象id

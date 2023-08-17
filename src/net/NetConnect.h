@@ -48,11 +48,11 @@ struct STEncyptData
 {
     bool        bIsDHKey;                       // 密钥是否由DH生成
     uint16_t    uiKeyLen;                       // 密钥长度
-    char        szKey[MAX_ENCRYPT_DATA_LEN];    // 密钥
+    uint8_t     szKey[MAX_ENCRYPT_DATA_LEN];    // 密钥
     uint16_t    uiNumALen;                      // 大数A长度
-    char        szNumA[MAX_ENCRYPT_DATA_LEN];   // 大数A(客户端公钥)
+    uint8_t     szNumA[MAX_ENCRYPT_DATA_LEN];   // 大数A(客户端公钥)
     uint16_t    uiNumBLen;                      // 大数B长度
-    char        szNumB[MAX_ENCRYPT_DATA_LEN];   // 大数B(服务器公钥)
+    uint8_t     szNumB[MAX_ENCRYPT_DATA_LEN];   // 大数B(服务器公钥)
 };
 
 class NetConnect 
@@ -74,11 +74,21 @@ public:
      */
     int Proc(time_t tNow);
 
-    int InitConnect();
-
+    /**
+     * @brief 链接初始化
+     * 
+     * @param ulConnID          链接ID
+     * @param pNetWork          网络对象
+     * @param stClientAddr      客户端地址
+     * @param szCookies         cookie信息
+     * @param stEncyptData      加密数据
+     * @return int 
+     */
+    int InitConnect(
+        uint32_t ulConnID, NetWork *pNetWork, const sockaddr_in& stClientAddr, const char *szCookies, const struct STEncyptData& stEncyptData);
 
     /**
-     * @brief 发送网络数据
+     * @brief 可靠包（kcp）发送网络数据
      * 
      * @param szData    
      * @param iLen      
@@ -87,30 +97,16 @@ public:
      */
     int Send2NetWork(const char* szData, int iLen, bool bReliable);
 
-public:
     /**
-     * @brief 获取连接id
+     * @brief 发送业务数据
      * 
-     * @return uint32_t 
+     * @param pData     业务数据
+     * @param iLen      业务数据大小
+     * @param stOpt     消息选项
+     * @return int 
      */
-    inline uint32_t GetConnectID() const {return m_ulConnID;}
+    int SendMsg(const char *pData, int iLen, const MsgOpt& stOpt);
 
-    /**
-     * @brief 获取客户端地址
-     * 
-     * @return const sockaddr_in 
-     */
-    inline const sockaddr_in& GetClientAddr() const {return m_stClientAddr;}
-
-    /**
-     * @brief 连接是否关闭
-     * 
-     * @return true 
-     * @return false 
-     */
-    inline bool IsClose() const {return (m_eState == CONN_STATE_CLOSE);}
-
-private:
     /**
      * @brief 断开连接
      * 
@@ -128,11 +124,96 @@ private:
     int CloseConnect(EnmCloseReason eReason);
 
     /**
-     * @brief 清楚连接数据
+     * @brief 清除连接数据
      * 
      */
     void ClearConnData();
 
+    /**
+     * @brief 绑定链接
+     * 
+     * @param stBindMsg 
+     * @return int 
+     */
+    int BindConnect(const STBindConnMsg& stBindMsg);
+
+    /**
+     * @brief 结束链接
+     * 
+     * @param eCloseReason 
+     * @return int 
+     */
+    int FinConnect(EnmCloseReason eCloseReason);
+
+    /**
+     * @brief 处理网络消息
+     * 
+     * @param oMsg 
+     * @return int 
+     */
+    int HandleNetMsg(const NetMsg& oMsg);
+
+    /**
+     * @brief 写IO时回调
+     * 
+     * @param stPacket 
+     */
+    void OnIOWrite(STNetPacket& stPacket);
+
+    /**
+     * @brief 执行重连
+     * 
+     * @param stClientAddr 
+     * @return int 
+     */
+    int Reconnect(const sockaddr_in& stClientAddr);
+
+public:
+    /**
+     * @brief 获取连接id
+     * 
+     * @return uint32_t 
+     */
+    inline const uint32_t GetConnectID() {return m_ulConnID;}
+
+    /**
+     * @brief 获取客户端地址
+     * 
+     * @return const sockaddr_in 
+     */
+    inline const sockaddr_in& GetClientAddr() {return m_stClientAddr;}
+
+    /**
+     * @brief 获取加密数据
+     * 
+     * @return const STEncyptData& 
+     */
+    inline const STEncyptData& GetEncyptData() {return m_stEncyptData;}
+
+    /**
+     * @brief 获取cookie
+     * 
+     * @return const char* 
+     */
+    inline const char* GetCookie() {return m_szCookies;}
+
+    /**
+     * @brief 是否断线
+     * 
+     * @return true 
+     * @return false 
+     */
+    inline const bool IsDisConnect() {return (m_eState == CONN_STATE_DISCONNET);}
+
+    /**
+     * @brief 连接是否关闭
+     * 
+     * @return true 
+     * @return false 
+     */
+    inline const bool IsClose() {return (m_eState == CONN_STATE_CLOSE);}
+
+private:
     /**
      * @brief 从kcp收取消息
      * 
@@ -149,6 +230,62 @@ private:
      */
     int RecvOneMsg(const char* szMsg, int iMsgLen);
 
+    /**
+     * @brief 数据编码
+     * 
+     * @param pInData             原数据
+     * @param iInDataLen          原数据长度
+     * @param pEncodeData       [out]编码后的数据
+     * @param iEncodeDataLen    [out]编码后的数据长度
+     * @param bEncrypt          是否加密
+     * @return int 
+     */
+    int EncodeMsgData(const char *pInData, int iInDataLen, char *pEncodeData, int& iEncodeDataLen, bool bEncrypt);
+
+    /**
+     * @brief 发送可靠包
+     * @return int 
+     */
+    int SendUnreliable(const char *pData, int iDataLen);
+
+    /**
+     * @brief 发送非可靠包
+     * @return int 
+     */
+    int SendReliable(const char *pData, int iDataLen);
+
+    /**
+     * @brief 检查并获取当前合包
+     * 
+     * @param iLen 待发送新数据长度
+     * @return STNetPacket* 
+     */
+    STNetPacket* GetCurMergePacket(size_t iLen);
+
+    /**
+     * @brief 接收可靠网络包
+     * @return int 
+     */
+    int RecvReliable(const char *pData, int iDataLen);
+
+    /**
+     * @brief 接收不可靠网络包
+     * @return int 
+     */
+    int RecvUnreliable(const char *pData, int iDataLen);
+
+    /**
+     * @brief 处理心跳包
+     * @return int 
+     */
+    int HandleHeartBeat(const STHeartBeatPacket& stHearBeat);
+
+    /**
+     * @brief 处理Fin包
+     * @return int 
+     */
+    int HandleFin(const STFinPacket& stFinPacket);
+
 private:
     uint32_t        m_ulConnID;         // 连接id
     EnmNetConnState m_eState;           // 连接状态
@@ -161,7 +298,7 @@ private:
     uint64_t        m_ullNetWorkID;     // 网络对象ID
     KcpWrapper      m_oKcp;             // kcp对象
 
-    NetPacket       *m_poMergePoint;    // 当前合包指针
+    STNetPacket     *m_poMergePacket;   // 当前合包指针
     uint32_t        m_ulCurMergeOffset; // 合包指针偏移
     char            m_szMergePacketBuffer[MAX_PACKET_DATA_SIZE];    // 可靠包合包缓冲区
     STMergePacketData m_stMergeState;   // 合包状态信息

@@ -40,7 +40,7 @@ int NetWorkMgr::Init()
             }
         }
     }
-    LOG_DBG_FMT(ptrNetLogger, "net work init succ.");
+    LOG_DBG_FMT(ptrNetLogger, "NetWorkMgr init succ.");
     return 0;
 }
 

@@ -76,7 +76,7 @@ static inline const char *Decode16u(const char *p, unsigned short *w)
 }
 
 /* encode 32 bits unsigned int (lsb) */
-static inline char *Encode32u(char *p, IUINT32 l)
+static inline char *Encode32u(char *p, uint32_t l)
 {
 #if IWORDS_BIG_ENDIAN || IWORDS_MUST_ALIGN
 	*(unsigned char*)(p + 0) = (unsigned char)((l >>  0) & 0xff);
@@ -91,7 +91,7 @@ static inline char *Encode32u(char *p, IUINT32 l)
 }
 
 /* decode 32 bits unsigned int (lsb) */
-static inline const char *Decode32u(const char *p, IUINT32 *l)
+static inline const char *Decode32u(const char *p, uint32_t *l)
 {
 #if IWORDS_BIG_ENDIAN || IWORDS_MUST_ALIGN
 	*l = *(const unsigned char*)(p + 3);
@@ -235,7 +235,29 @@ int NetMsg::DecodeMsg(const char *szNetBuff, uint64_t ullLen)
 
 int NetMsg::EncodeMsg(char *szOutPutBuff, uint64_t& ullLen)
 {
+    
     return 0;
+}
+
+int NetReader::PeekUnreliable(const char **szOutBuff)
+{
+    if (m_ullSize < (uint64_t)sizeof(uint16_t))
+    {
+        return -1;
+    }
+
+    uint16_t usDataLen = 0;
+    Decode16u(m_ptrBuff, &usDataLen);
+
+    if (m_ullSize < (uint64_t)(usDataLen + sizeof(uint16_t)))
+    {
+        return -1;
+    }
+
+    *szOutBuff = m_ptrBuff + sizeof(uint16_t);
+    m_ptrBuff = m_ptrBuff + (sizeof(uint16_t) + usDataLen);
+    m_ullSize -= (sizeof(uint16_t) + usDataLen);
+    return usDataLen;
 }
 
 int NetReader::Read(STNetMsgHead& stHead)
@@ -338,5 +360,148 @@ int NetReader::Read(STFinPacket& stPacket)
     m_ptrBuff = Decode32u(m_ptrBuff, &(stPacket.dwConnId));
     m_ptrBuff = Decode8u(m_ptrBuff, &(stPacket.bReason));
     m_ullSize -= ullPacketSize;
+    return 0;
+}
+
+int NetWriter::Write(STNetMsgHead& stHead)
+{
+    size_t ulSize = sizeof(STNetMsgHead);
+    if (!CheckBuff(ulSize))
+    {
+        return -1;
+    }
+
+    memcpy(m_ptrBuff + m_ulSize, &stHead, ulSize);
+    m_ulSize += ulSize;
+    return 0;
+}
+
+int NetWriter::Write(STHandShakePacket& stPacket)
+{
+    size_t ulSize = sizeof(STHandShakePacket);
+    if (!CheckBuff(ulSize))
+    {
+        return -1;
+    }
+
+    char *ptr = m_ptrBuff + m_ulSize;
+    ptr = Encode32u(ptr, stPacket.dwTimeStamp);
+    ptr = Encode8u(ptr, stPacket.bScreteKey);
+    ptr = Encode32u(ptr, stPacket.dwConnId);
+    ptr = Encode8u(ptr, stPacket.bIsKey);
+    ptr = Encode8u(ptr, stPacket.bEncryptDataLen);
+    ptr = Encode64u(ptr, stPacket.ullExtData);
+
+    memcpy(ptr, stPacket.szEncryptData, MAX_ENCRYPT_DATA_LEN);
+    ptr += MAX_ENCRYPT_DATA_LEN;
+    memcpy(ptr, stPacket.szCookies, MAX_HANDSHAKE_COOKIES_SIZE);
+    ptr += MAX_HANDSHAKE_COOKIES_SIZE;
+
+    m_ulSize += ulSize;
+    return 0;
+}
+
+int NetWriter::Write(STHeartBeatPacket& stPacket)
+{
+    size_t ulSize = sizeof(STHeartBeatPacket);
+    if (!CheckBuff(ulSize))
+    {
+        return -1;
+    }
+
+    char *ptr = m_ptrBuff + m_ulSize;
+    ptr = Encode32u(ptr, stPacket.dwConnId);
+    ptr = Encode64u(ptr, stPacket.ullClientTimeMs);
+    ptr = Encode64u(ptr, stPacket.ullServerTimeMs);
+    m_ulSize += ulSize;
+    return 0;
+}
+
+int NetWriter::Write(STReconnectPacket& stPacket)
+{
+    size_t ulSize = sizeof(STReconnectPacket);
+    if (!CheckBuff(ulSize))
+    {
+        return -1;
+    }
+
+    char *ptr = m_ptrBuff + m_ulSize;
+    ptr = Encode32u(ptr, stPacket.dwConnId);
+    memcpy(ptr, &stPacket.szCookies, MAX_HANDSHAKE_COOKIES_SIZE);
+    m_ulSize += ulSize;
+    return 0;
+}
+
+int NetWriter::Write(STRstPacket& stPacket)
+{
+    size_t ulSize = sizeof(STRstPacket);
+    if (!CheckBuff(ulSize))
+    {
+        return -1;
+    }
+
+    char *ptr = m_ptrBuff + m_ulSize;
+    ptr = Encode32u(ptr, stPacket.dwConnId);
+    ptr = Encode8u(ptr, stPacket.bRstType);
+    m_ulSize += ulSize;
+    return 0;
+}
+
+int NetWriter::Write(STFinPacket& stPacket)
+{
+    size_t ulSize = sizeof(STFinPacket);
+    if (!CheckBuff(ulSize))
+    {
+        return -1;
+    }
+
+    char *ptr = m_ptrBuff + m_ulSize;
+    ptr = Encode32u(ptr, stPacket.dwConnId);
+    ptr = Encode8u(ptr, stPacket.bReason);
+    m_ulSize += ulSize;
+    return 0;
+}
+
+int NetWriter::WriteDataHead(DataHead& stHead)
+{
+    size_t ulSize = sizeof(uint8_t);
+    if (!CheckBuff(ulSize))
+    {
+        return -1;
+    }
+
+    char *ptr = m_ptrBuff + m_ulSize;
+    (*(uint8_t*)ptr) = 0;
+    (*(uint8_t*)ptr) = (*(uint8_t*)ptr) | stHead.bIsEncrypt;
+    m_ulSize += ulSize;
+    return 0;
+}
+
+int NetWriter::WriteUnreliable(const char *pData, size_t ulLen)
+{
+    size_t ulSize = sizeof(uint16_t) + ulLen;
+    if (!CheckBuff(ulSize))
+    {
+        return -1;
+    }
+
+    // 将数据长度加在数据前
+    char *ptr = m_ptrBuff + m_ulSize;
+    ptr = Encode16u(ptr, (unsigned short)ulLen);
+    memcpy(ptr, pData, ulLen);
+    m_ulSize += ulSize;
+    return 0;
+}
+
+int NetWriter::WriteRawData(const char *pData, size_t ulLen)
+{
+    if (!CheckBuff(ulLen))
+    {
+        return -1;
+    }
+    
+    char *ptr = m_ptrBuff + m_ulSize;
+    memcpy(ptr, pData, ulLen);
+    m_ulSize += ulLen;
     return 0;
 }

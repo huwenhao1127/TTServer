@@ -79,7 +79,7 @@ public:
      * 
      * @return uint64_t 
      */
-    inline uint64_t GetRemain() const {return m_ullSize;}
+    inline size_t GetRemain() const {return m_ullSize;}
 
     /**
      * @brief udp数据解码->网络包
@@ -91,16 +91,56 @@ public:
     int Read(STRstPacket& stPacket);
     int Read(STFinPacket& stPacket);
     int ReadDataHead(DataHead& stHead);
+
+    /**
+     * @brief 读取非可靠包消息
+     * 
+     * @param szOutBuff 消息地址
+     * @return int 消息长度
+     */
+    int PeekUnreliable(const char **szOutBuff);
 private:
     const char *m_ptrBuff;  // 未读缓冲区地址
-    uint64_t    m_ullSize;  // 未读缓冲区大小
+    size_t      m_ullSize;  // 未读缓冲区大小
 };
 
 
-class NetWritter
+class NetWriter
 {
 public:
+    NetWriter(char *ptrBuff, size_t ulSize) : m_ptrBuff(ptrBuff), m_ulMaxSize(ulSize), m_ulSize(0) {}
+
+    /**
+     * @brief 检查写入空间是否足够
+     * 
+     * @param ulSize 
+     * @return true 
+     * @return false 
+     */
+    inline bool CheckBuff(size_t ulSize) const {return ulSize <= (m_ulMaxSize - m_ulSize);}
+
+    /**
+     * @brief 获取写缓冲区已写数据长度
+     * 
+     * @return size_t 
+     */
+    inline size_t GetSize() const {return m_ulSize;}
+
+    /**
+     * @brief 业务数据编码->网络包
+     */
+    int Write(STNetMsgHead& stHead);
+    int Write(STHandShakePacket& stPacket);
+    int Write(STHeartBeatPacket& stPacket);
+    int Write(STReconnectPacket& stPacket);
+    int Write(STRstPacket& stPacket);
+    int Write(STFinPacket& stPacket);
+    int WriteDataHead(DataHead& stHead);
+    int WriteUnreliable(const char *pData, size_t ulLen);
+    int WriteRawData(const char *pData, size_t ulLen);
 
 private:
-    
+    char        *m_ptrBuff;     // 写缓冲区
+    size_t      m_ulMaxSize;    // 写缓冲区大小
+    size_t      m_ulSize;       // 已用大小
 };

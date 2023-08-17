@@ -58,7 +58,6 @@ public:
      */
     int AllocNewData(char* pData, uint32_t ulDataLen);
 
-private:
     /**
      * @brief 当前剩余空间
      * 

@@ -108,7 +108,7 @@ public:
      * 
      * @return const ikcpcb& 
      */
-    inline const ikcpcb& GetIKCPCB() const {return m_ikcp;}
+    inline const ikcpcb& GetIKCPCB() {return m_ikcp;}
 
     /**
      * @brief 是否断连
@@ -117,6 +117,14 @@ public:
      * @return false 
      */
     inline bool IsDeadLink() const {return (-1 == (int)m_ikcp.state);}
+
+    /**
+     * @brief 异常检测
+     * 
+     * @return true 
+     * @return false 
+     */
+    inline const bool IsSnBroken() {return (-2 == (int)m_ikcp.state);}
 
     /**
      * @brief 业务是否需要收包

@@ -8,7 +8,7 @@ set(CMAKE_VERBOSE_MAKEFILE OFF)
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED True)
 # c/c++编译参数
-set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -lpthread -O3 -fPIC -ggdb -std=c++17 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations -fno-omit-frame-pointer")
+set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -lpthread -lssl -lcrypto -O0 -fPIC -ggdb -std=c++17 -Wall -Wno-deprecated -Werror -Wno-unused-function -Wno-builtin-macro-redefined -Wno-deprecated-declarations -fno-omit-frame-pointer")
 
 # 生成版本信息
 # 添加自定义cmake文件目录

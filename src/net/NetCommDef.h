@@ -97,12 +97,20 @@ enum EnmMsgType {
     ENM_CONN_MSG_TYPE_BIND          = 4,    // 连接绑定
 };
 
+// 连接RST类型
+enum EnmConnRstType {
+    CONN_RST_TYPE_NONE              = 0, 
+    CONN_RST_TYPE_DISCONENCT        = 1,    // 连接已断线 
+    CONN_RST_TYPE_CLOSE             = 2,    // 连接已关闭
+    CONN_RST_TYPE_UNKNOWN_PEER      = 3,    // 未知客户端
+};
+
 /** 公用枚举定义 END **/;
 
 
 /** 网络包结构定义 BEGIN **/
 #pragma pack(1)
-// 网络报消息头
+// 网络包消息头
 struct STNetMsgHead
 {
     uint8_t bType:7;                          // 网络包类型(EnmNetPacketType)
@@ -164,19 +172,14 @@ union UNetMsgBody
     STDataPacket stData;                // 数据包
 };
 
-// 连接RST类型
-enum EnmConnRstType {
-    CONN_RST_TYPE_NONE              = 0, 
-    CONN_RST_TYPE_DISCONENCT        = 1,    // 连接已断线 
-    CONN_RST_TYPE_CLOSE             = 2,    // 连接已关闭
-};
-
 // 网络包
-struct NetPacket
+class NetConnect;
+struct STNetPacket
 {
     SendQueueNode stQueNode;                // 发送队列节点
     struct sockaddr_in stClientAddr;        // 客户端地址
     uint32_t ulConnectID;                   // 连接ID
+    NetConnect *poConn;                     // 链接实例
     size_t ulDataLen;                       // 数据长度
     size_t ulBuffLen;                       // Buffer长度
     char szBuff[0];                         // Buffer首地址
@@ -234,6 +237,11 @@ struct STConnEventMsg
     } stData;                       // 数据
 };
 
+struct STCloseConnMsg
+{
+    uint8_t bReason;                // 关闭原因
+    int     iDelayCloseTime;        // 延迟关闭时间
+};
 
 /** 业务包结构定义 END **/
 #pragma pack()
@@ -277,11 +285,8 @@ struct STConnEventMsg
 // 可靠包包头最大长度
 #define MAX_RELIABLE_MERGE_HEAD_SIZE 22
 
-// 2.2 时间相关规范
-
-
 // COOKIES 有效时间
-#define MAX_HANDSHAKE_COOKIES_TIME (10)
+#define MAX_HANDSHAKE_COOKIES_TIME  20
 
 /** 网络基础配置 **/
 // 最大连接数
@@ -348,4 +353,10 @@ struct STConnEventMsg
 #define MAX_CONN_RECV_NUM       5000                  // 防攻击-单连接每10秒收包数量上限
 #define MAX_CONN_RECV_SIZE      1024000               // 防攻击-单连接每10秒收包流量上限
 #define MAX_LOOP_MSG_NUM        1000                  // 单次循环处理的最大消息数
+
+#define HANDSHAKE_PACKET_SIZE   (sizeof(STNetMsgHead) + sizeof(STHandShakePacket))      // 握手包大小
+#define HEARTBEAT_PACKET_SIZE   (sizeof(STNetMsgHead) + sizeof(STHeartBeatPacket))      // 心跳包大小
+#define RECONNECT_PACKET_SIZE   (sizeof(STNetMsgHead) + sizeof(STReconnectPacket))      // 重连包大小
+#define FIN_PACKET_SIZE         (sizeof(STNetMsgHead) + sizeof(STFinPacket))            // Fin包大小
+#define RST_PACKET_SIZE         (sizeof(STNetMsgHead) + sizeof(STRstPacket))            // Rst包大小
 

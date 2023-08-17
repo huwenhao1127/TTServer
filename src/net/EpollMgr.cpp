@@ -26,7 +26,7 @@ int EpollMgr::Init()
         return -1;
     }
 
-    LOG_DBG_FMT(ptrNetLogger, "epoll mgr init succ. fd:{}", m_iFD);
+    LOG_DBG_FMT(ptrNetLogger, "EpollMgr init succ. fd:{}", m_iFD);
     return 0;
 }
 
