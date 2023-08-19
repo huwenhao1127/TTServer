@@ -246,47 +246,27 @@ struct STCloseConnMsg
 /** 业务包结构定义 END **/
 #pragma pack()
 
-/*************** 2. 标准辅助定义 ***************/
+/** 消息大小定义 BEGIN **/
+#define IP_HEAD_SIZE                    20                                                  // IP报文头部长度
+#define UDP_HEAD_SIZE                   8                                                   // UDP报文头部长度
+#define NET_MTU                         576                                                 // 网络报文MTU 
+#define MAX_PACKET_SIZE                 (NET_MTU - IP_HEAD_SIZE - UDP_HEAD_SIZE)            // 最大网络包大小
+#define MAX_PACKET_DATA_SIZE            (MAX_PACKET_SIZE - sizeof(struct STNetMsgHead))     // 最大网络包数据大小
+#define KCP_MTU                         MAX_PACKET_DATA_SIZE                                // KCP算法MTU
+#define MAX_NET_RECV_BUF_LEN            1500                                                // 最大网络包接收缓冲大小(收包限制设宽松点)
+#define MAX_BIZ_MSG_SIZE                (1<<20)                                             // 最大业务包长度(未编码原文数据)
+#define MAX_ENCODE_BUF_SIZE             (MAX_BIZ_MSG_SIZE + sizeof(DataHead) + 256)         // 最大业务包编码长度(在原文长度上加256字节冗余)
+#define MAX_RELIABLE_MSG_SIZE           (MAX_BIZ_MSG_SIZE + 256)                            // 最大可靠业务包编码大小(DataHead+加密/明文数据)
+#define MAX_UNRELIABLE_MSG_SIZE         (MAX_PACKET_DATA_SIZE - sizeof(uint16_t))           // 最大非可靠业务包编码大小(DataHead+加密/明文数据)
+#define MAX_RELIABLE_MERGE_HEAD_SIZE    22                                                  // 可靠包包头最大长度
+#define MAX_HANDSHAKE_COOKIES_TIME      20                                                  // COOKIES 有效时间
+#define HANDSHAKE_PACKET_SIZE           (sizeof(STNetMsgHead) + sizeof(STHandShakePacket))  // 握手包大小
+#define HEARTBEAT_PACKET_SIZE           (sizeof(STNetMsgHead) + sizeof(STHeartBeatPacket))  // 心跳包大小
+#define RECONNECT_PACKET_SIZE           (sizeof(STNetMsgHead) + sizeof(STReconnectPacket))  // 重连包大小
+#define FIN_PACKET_SIZE                 (sizeof(STNetMsgHead) + sizeof(STFinPacket))        // Fin包大小
+#define RST_PACKET_SIZE                 (sizeof(STNetMsgHead) + sizeof(STRstPacket))        // Rst包大小
+/** 消息大小定义 END **/
 
-// 2.1 消息大小相关规范
-// IP报文头部长度
-#define IP_HEAD_SIZE (20)
-
-// UDP报文头部长度
-#define UDP_HEAD_SIZE (8)
-
-// 网络报文MTU 
-#define NET_MTU (576)
-
-// 最大网络包大小
-#define MAX_PACKET_SIZE (NET_MTU - IP_HEAD_SIZE - UDP_HEAD_SIZE)
-
-// 最大网络包数据大小
-#define MAX_PACKET_DATA_SIZE (MAX_PACKET_SIZE - sizeof(struct STNetMsgHead))
-
-// KCP算法MTU
-#define KCP_MTU (MAX_PACKET_DATA_SIZE)
-
-// 最大网络包接收缓冲大小(收包限制设宽松点)
-#define MAX_NET_RECV_BUF_LEN    (1500)
-
-// 最大业务包长度(未编码原文数据)
-#define MAX_BIZ_MSG_SIZE    (1<<20)
-
-// 最大业务包编码长度(在原文长度上加256字节冗余)
-#define MAX_ENCODE_BUF_SIZE (MAX_BIZ_MSG_SIZE + sizeof(DataHead) + 256)
-
-// 最大可靠业务包编码大小(DataHead+加密/明文数据)
-#define MAX_RELIABLE_MSG_SIZE   (MAX_BIZ_MSG_SIZE + 256)
-
-// 最大非可靠业务包编码大小(DataHead+加密/明文数据)
-#define MAX_UNRELIABLE_MSG_SIZE (MAX_PACKET_DATA_SIZE - sizeof(uint16_t))
-
-// 可靠包包头最大长度
-#define MAX_RELIABLE_MERGE_HEAD_SIZE 22
-
-// COOKIES 有效时间
-#define MAX_HANDSHAKE_COOKIES_TIME  20
 
 /** 网络基础配置 **/
 // 最大连接数
@@ -297,7 +277,6 @@ struct STCloseConnMsg
 
 // 收包队列大小
 #define MAX_N2M_QUEUE_SIZE      20971520
-
 
 /** KCP配置 **/
 // update间隔(ms)
@@ -354,9 +333,5 @@ struct STCloseConnMsg
 #define MAX_CONN_RECV_SIZE      1024000               // 防攻击-单连接每10秒收包流量上限
 #define MAX_LOOP_MSG_NUM        1000                  // 单次循环处理的最大消息数
 
-#define HANDSHAKE_PACKET_SIZE   (sizeof(STNetMsgHead) + sizeof(STHandShakePacket))      // 握手包大小
-#define HEARTBEAT_PACKET_SIZE   (sizeof(STNetMsgHead) + sizeof(STHeartBeatPacket))      // 心跳包大小
-#define RECONNECT_PACKET_SIZE   (sizeof(STNetMsgHead) + sizeof(STReconnectPacket))      // 重连包大小
-#define FIN_PACKET_SIZE         (sizeof(STNetMsgHead) + sizeof(STFinPacket))            // Fin包大小
-#define RST_PACKET_SIZE         (sizeof(STNetMsgHead) + sizeof(STRstPacket))            // Rst包大小
+
 

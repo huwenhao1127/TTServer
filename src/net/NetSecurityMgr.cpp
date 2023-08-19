@@ -1,16 +1,165 @@
 #include "NetSecurityMgr.h"
 
-int NetSecurityMgr::Init()
+NetSecurityMgr::NetSecurityMgr()
 {
-    return 0;
+    m_pBigNumP = nullptr;
+    m_pBigNumG = nullptr;
+    m_ulBigNumPBitNum = 0;
 }
 
-int NetSecurityMgr::SetEncKey(const uint8_t *pszEncKey, int iKeyLen)
+NetSecurityMgr::~NetSecurityMgr()
 {
+    // 单例的指针不用手动释放内存
+}
+
+int NetSecurityMgr::Init()
+{
+    // 初始化参数G
+    uint32_t ulG = htonl(5);
+    m_pBigNumG = BN_new();
+    m_pBigNumG = BN_bin2bn((const unsigned char*)&ulG, sizeof(uint32_t), nullptr);
+    if (nullptr == m_pBigNumG)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "BN_bin2bn fail");
+        return -1;
+    }
+
+    // 初始化参数P
+    m_ulBigNumPBitNum = 128;
+    m_pBigNumP = BN_new();
+    CHECK_IF_PARAM_NULL(ptrNetLogger, m_pBigNumP, -1);
+    char szP[] = "FFFFFFFFFFFFFFFFFFFFFFFFFFFFFF61";    // 128bit最大素数
+    int iRet = BN_hex2bn(&m_pBigNumP, szP);
+    if (0 >= iRet || nullptr == m_pBigNumP)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "BN_hex2bn fail, ret:{}", iRet);
+        return -1;
+    }
+    uint32_t ulPBitNum = BN_num_bits(m_pBigNumP);
+    if (m_ulBigNumPBitNum != ulPBitNum)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "BN_num_bits[{}] invalid.", ulPBitNum);
+        return -1;
+    }
+
+    // 验证DH参数是否合法
+    DH *pDH = DH_new();
+    DH_set0_pqg(pDH, m_pBigNumP, nullptr, m_pBigNumG);
+    int iStatus = 0;
+    iRet = DH_check(pDH, &iStatus);
+    if ((iRet != 1) || (iStatus != 0 && iStatus != 2))
+    {
+        LOG_ERR_FMT(ptrNetLogger, "DH check fail, ret:{} status:{}", iRet, iStatus);
+        return -1;
+    }
+    DH_free(pDH);
+
+    LOG_DBG_FMT(ptrNetLogger, "NetSecurityMgr init succ.");
     return 0;
 }
 
 int NetSecurityMgr::HandleHandShake2(const uint8_t *szA, uint16_t ulALen, uint8_t *szB, uint16_t& ulBLen, uint8_t *szRawKey, uint16_t& ulRawKeyLen)
 {
+    CHECK_IF_PARAM_NULL(ptrNetLogger, szA, -1);
+    CHECK_IF_PARAM_NULL(ptrNetLogger, szB, -1);
+    CHECK_IF_PARAM_NULL(ptrNetLogger, szRawKey, -1);
+    DH *pDH = DH_new();
+    DH_set0_pqg(pDH, m_pBigNumP, nullptr, m_pBigNumG);
+
+    // 生成公钥私钥
+    int iRet = DH_generate_key(pDH);
+    if (1 != iRet) 
+    {
+        LOG_ERR_FMT(ptrNetLogger, "DH_generate_key fail, ret:{}", iRet);
+        DH_free(pDH);
+        return -1;
+    }
+
+    // 公钥为大数B
+    const BIGNUM *pPubKey = DH_get0_pub_key(pDH);
+    int iPubKeyLen = BN_num_bits(pPubKey);
+    ulBLen = BN_bn2bin(pPubKey, szB);
+    if (ulBLen == 0 || (int)ulBLen < iPubKeyLen)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "PubKey len[{}] invalid, NumB len:{}", iPubKeyLen, ulBLen);
+        DH_free(pDH);
+        return -1;
+    }
+        
+    // 生成共享密钥, 客户端公钥大数A+本地私钥
+    BIGNUM *pBigNumA = BN_bin2bn((const unsigned char*)szA, ulALen, nullptr);
+    if (nullptr == pBigNumA)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "big num A bin2bn fail, len:{}", ulALen);
+        DH_free(pDH);
+        return -1;
+    }
+    
+    int iLen = DH_compute_key((unsigned char*)szRawKey, pBigNumA, pDH);
+    iRet = 0;
+    if (0 >= iLen)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "dh compute key fail, len: {}", ulRawKeyLen);
+        iRet = -1;
+    }
+
+    ulRawKeyLen = (uint16_t)iLen;
+    DH_free(pDH);
+    BN_free(pBigNumA);
+    return iRet;
+}
+
+int NetSecurityMgr::SetEncKey(const uint8_t *pszEncKey, int iKeyLen)
+{
+    CHECK_IF_PARAM_NULL(ptrNetLogger, pszEncKey, -1);
+    // 初始化key
+    if (MAX_ENCRYPT_DATA_LEN != iKeyLen)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "AES SetEncKey fail, len: {}", iKeyLen);
+        return -1;
+    }
+    memcpy(m_szEncyptKey, pszEncKey, iKeyLen);
+    return 0;
+}
+
+int NetSecurityMgr::EncryptData(const char *szInput, size_t ulInLen, char *szOutput, size_t& ulOutLen)
+{    
+    AES_set_encrypt_key((const unsigned char*)m_szEncyptKey, 128, &m_stAESKey);              
+    ZeroStruct(m_szIVec);
+
+    // 输出字节长度为16字节整数倍,不够填充
+    ulOutLen = ((ulInLen / 16) + 1) * 16;
+    // 先加密能被16字节整除的块
+    size_t ulFullBlockSize = (ulInLen / 16) * 16;
+    AES_cbc_encrypt((const unsigned char*)szInput, (unsigned char*)szOutput, ulFullBlockSize, &m_stAESKey, m_szIVec, AES_ENCRYPT);
+    szOutput += ulFullBlockSize;
+
+    // 再加密余下不够16字节的块,没有余下的块,也额外添加一个全0块描述原始数据长度
+    unsigned char szLeftBlock[16];
+    size_t ulLeftDataLen = ulInLen - ulFullBlockSize;
+    size_t ulPaddingLen = ulOutLen - ulInLen;
+    memcpy(szLeftBlock, (szInput + ulFullBlockSize), ulLeftDataLen);
+    for (int i = ulLeftDataLen; i < 16; ++i)
+    {
+        szLeftBlock[i] = (unsigned char)ulPaddingLen;
+        //LOG_DBG_FMT(ptrNetLogger, "cur: {}, padding: {}", i, (int)szLeftBlock[i]);
+    }
+    AES_cbc_encrypt(szLeftBlock, (unsigned char*)szOutput, 16, &m_stAESKey, m_szIVec, AES_ENCRYPT);
+    LOG_DBG_FMT(ptrNetLogger, "encrypt data succ, in:{} out:{}", ulInLen, ulOutLen);
+    return 0;
+}
+
+int NetSecurityMgr::DecryptData(const char *szInput, size_t ulInLen, char *szOutput, size_t& ulOutLen)
+{
+    AES_set_decrypt_key((const unsigned char*)m_szEncyptKey, 128, &m_stAESKey);
+    ZeroStruct(m_szIVec);
+    AES_cbc_encrypt((const unsigned char*)szInput, (unsigned char*)szOutput, ulInLen, &m_stAESKey, m_szIVec, AES_DECRYPT);
+    // 获取填充的数据长度
+    size_t ulPaddingLen = (size_t)szOutput[ulInLen - 1];
+    // 尾部16字节全部是填充的内容
+    ulPaddingLen = (0 == ulPaddingLen) ? 16 : ulPaddingLen;
+    LOG_DBG_FMT(ptrNetLogger, "decrypt data succ, pad size:{}", ulPaddingLen);
+    ulOutLen = ulInLen - ulPaddingLen;
+    LOG_DBG_FMT(ptrNetLogger, "decrypt data succ, in:{} out:{}", ulInLen, ulOutLen);
     return 0;
 }
