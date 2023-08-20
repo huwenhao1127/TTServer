@@ -50,17 +50,17 @@ int KcpWrapper::Init()
     }
 
     m_bNeedRecv = false;
+    m_ikcp.writelog = WriteLog;
 
     const ikcpcb* kcp_res = ikcp_create(m_oConn.GetConnectID(), this, &m_ikcp, KCP_MTU, s_kcp_encode_buf);
     if (kcp_res != (&m_ikcp))
     {
-        LOG_ERR_FMT(ptrNetLogger, "connect[{}] kcp create fail.", m_oConn.GetConnectID());
+        LOG_ERR_FMT(ptrNetLogger, "connect[{}] kcp create fail, {}", m_oConn.GetConnectID(), GetLogInfo());
         return -1;
     }
 
     // 设置kcp参数
     m_ikcp.output = KcpOutPut;
-    m_ikcp.writelog = WriteLog;
     ikcp_wndsize(&m_ikcp, KCP_CONF_SND_WND, KCP_CONF_RCV_WND);
     ikcp_nodelay(&m_ikcp, KCP_CONF_NODELAY, KCP_CONF_UPDATE_INTERVAL, KCP_CONF_FAST_RESEND, KCP_CONF_NOCWND);
 

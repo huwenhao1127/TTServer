@@ -18,6 +18,15 @@ public:
      */
     int Init();
 
+    /**
+     * @brief 
+     * 
+     * @param key 
+     * @param keyLength 
+     * @param szInfo 
+     */
+    static void PrintKey(const unsigned char* key, size_t keyLength, const char *szInfo);
+
 public:
     /** DH算法相关 **/
     /**
@@ -32,6 +41,33 @@ public:
      * @return int 
      */
     int HandleHandShake2(const uint8_t *szA, uint16_t ulALen, uint8_t *szB, uint16_t& ulBLen, uint8_t *szRawKey, uint16_t& ulRawKeyLen);
+    
+    /**
+     * @brief 客户端生成公钥私钥
+     * 
+     * @param szA       [out] 公钥
+     * @param ulALen 
+     * @param szB       [out] 私钥
+     * @param ulBLen 
+     * @return int 
+     */
+    int HandleHandShake1ACK(uint8_t *szA, uint16_t& ulALen, uint8_t *szB, uint16_t& ulBLen);
+
+    /**
+     * @brief 客户端生成密钥
+     * 
+     * @param szServer  [in] 服务器公钥
+     * @param ulALen 
+     * @param szA       [in] 客户端公钥
+     * @param ulALen 
+     * @param szB       [in] 客户端私钥
+     * @param ulBLen    
+     * @param szKey     [out] key
+     * @param ulKeyLen 
+     * @return int 
+     */
+    int HandleHandShake2ACK(
+        const uint8_t *szServer, uint16_t ulServer, const uint8_t *szA, uint16_t ulALen, const uint8_t *szB, uint16_t ulBLen, uint8_t *szKey, uint16_t& ulKeyLen);
 
 public:
     /** AES算法相关 **/

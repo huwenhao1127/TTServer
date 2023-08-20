@@ -43,18 +43,6 @@ struct STMergePacketData
     bool        bNeedEncrypt;                                   // 合包是否需要加密
 };
 
-// DH算法加密相关数据
-struct STEncyptData
-{
-    bool        bIsDHKey;                       // 密钥是否由DH生成
-    uint16_t    uiKeyLen;                       // 密钥长度
-    uint8_t     szKey[MAX_ENCRYPT_DATA_LEN];    // 密钥
-    uint16_t    uiNumALen;                      // 大数A长度
-    uint8_t     szNumA[MAX_ENCRYPT_DATA_LEN];   // 大数A(客户端公钥)
-    uint16_t    uiNumBLen;                      // 大数B长度
-    uint8_t     szNumB[MAX_ENCRYPT_DATA_LEN];   // 大数B(服务器公钥)
-};
-
 class NetConnect 
 {
 public:
@@ -213,6 +201,8 @@ public:
      */
     inline const bool IsClose() {return (m_eState == CONN_STATE_CLOSE);}
 
+    inline void UpdateHeartBeat(time_t tCur) { m_tLastHeartBeat = tCur;}
+
 private:
     /**
      * @brief 从kcp收取消息
@@ -240,7 +230,7 @@ private:
      * @param bEncrypt          是否加密
      * @return int 
      */
-    int EncodeMsgData(const char *pInData, int iInDataLen, char *pEncodeData, int& iEncodeDataLen, bool bEncrypt);
+    int EncodeMsgData(const char *pInData, int iInDataLen, char *pEncodeData, size_t& iEncodeDataLen, bool bEncrypt);
 
     /**
      * @brief 发送可靠包

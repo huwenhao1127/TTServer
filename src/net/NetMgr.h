@@ -17,7 +17,7 @@ public:
      * 
      * @return int 
      */
-    int Init();
+    int Init(int iPort = UDP_ADDR_PORT);
 
     /**
      * @brief 开启网络线程
@@ -53,6 +53,8 @@ public:
      * @return int 
      */
     int Tick20S();
+
+    inline bool IsClient() const {return m_bIsClient;}
 
 public:
     /** 发包相关,操作m_oM2NQueue **/
@@ -140,4 +142,6 @@ private:
     RingQueue m_oM2NQueue;      // 发包队列 主线程->网络线程
     RingQueue m_oN2MQueue;      // 收包队列 网络线程->主线程
     char m_szMsgBuffer[MAX_NET_QUEUE_DATA_SIZE];    // 业务包合并缓冲区
+
+    bool m_bIsClient;           // 客户端标识
 };

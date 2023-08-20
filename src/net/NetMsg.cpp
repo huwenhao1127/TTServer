@@ -166,6 +166,8 @@ int NetMsg::DecodeMsg(const char *szNetBuff, uint64_t ullLen)
     {
         case NET_PACKET_HANDSHAKE1:
         case NET_PACKET_HANDSHAKE2:
+        case NET_PACKET_HANDSHAKE1_ACK:
+        case NET_PACKET_HANDSHAKE2_ACK:
         {
             // 握手包
             if (0 != oReader.Read(m_stBody.stHandShake))
@@ -235,7 +237,6 @@ int NetMsg::DecodeMsg(const char *szNetBuff, uint64_t ullLen)
 
 int NetMsg::EncodeMsg(char *szOutPutBuff, uint64_t& ullLen)
 {
-    
     return 0;
 }
 

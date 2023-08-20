@@ -16,6 +16,8 @@ NetWork::NetWork(uint64_t ullID, int iSockFD, const sockaddr_in& stSockAddr)
     m_ullID = ullID;
     m_iSockFD = iSockFD;
     m_stSockAddr = stSockAddr;
+    m_ulConnID = 0;
+    ZeroStruct(m_stEncyptData);
 }
 
 NetWork::~NetWork()
@@ -86,6 +88,7 @@ int NetWork::DoIOWrite()
             pstPacket->poConn->OnIOWrite(*pstPacket);
         }
 
+        LOG_DBG_FMT(ptrNetLogger, "fd[{}] sendto[{}] succ, num[{}], size[{}], Queue left:{}", m_iSockFD, sock_addr(&stClientAddr), iSendNum, ulSendSize, m_oSendQueue.Size());
         m_oSendQueue.Pop();
         free(pstPacket);
     }
@@ -111,7 +114,6 @@ int NetWork::DoIORead()
             {
                 LOG_ERR_FMT(ptrNetLogger, " fd[{}] recvform[{}] error:{}", m_iSockFD, sock_addr(&stClientAddr), errno);
             }
-            LOG_DBG_FMT(ptrNetLogger, " fd[{}] recvform size: {}", m_iSockFD, iCurRecvSize);
             break;
         }
 
@@ -148,6 +150,14 @@ int NetWork::HandleNetMsg(const NetMsg& oMsg, const sockaddr_in& stClientAddr)
         case NET_PACKET_RECONNECT:
         {
             return HandleReconnect(oMsg, stClientAddr);
+        }
+        case NET_PACKET_HANDSHAKE1_ACK:
+        {
+            return HandleHandShake1Ack(oMsg, stClientAddr);
+        }
+        case NET_PACKET_HANDSHAKE2_ACK:
+        {
+            return HandleHandShake2Ack(oMsg, stClientAddr);
         }
         default:
         {
@@ -250,6 +260,7 @@ int NetWork::SendHandShakeFail(const STHandShakePacket& stReq, const sockaddr_in
     stRsp.dwTimeStamp = stReq.dwTimeStamp;
     stRsp.bScreteKey  = stReq.bScreteKey;
     stRsp.ullExtData  = stReq.ullExtData;
+    stRsp.dwConnId = 0;
     memcpy(stRsp.szCookies, stReq.szCookies, MAX_HANDSHAKE_COOKIES_SIZE);
 
     LOG_DBG_FMT(ptrNetLogger, "client[{}] handshake2 fail, reason:{}", sock_addr(&stClient), iReason);
@@ -320,15 +331,14 @@ int NetWork::HandleHandShake2(const NetMsg& oMsg, const sockaddr_in& stClientAdd
     stEncyptData.uiNumALen = stReq.bEncryptDataLen;
     stEncyptData.uiNumBLen = MAX_ENCRYPT_DATA_LEN;
     memcpy(stEncyptData.szNumA, stReq.szEncryptData, stReq.bEncryptDataLen);
-    LOG_DBG_FMT(ptrNetLogger, "Big NumA: {}", (const char*)stEncyptData.szNumA);
 
     // 根据大数A,使用DH生成密钥和大数B
+    stEncyptData.uiKeyLen = MAX_ENCRYPT_DATA_LEN;
     int iRet = NetSecurityMgr::Inst().HandleHandShake2(
         stEncyptData.szNumA, stEncyptData.uiNumALen, stEncyptData.szNumB, stEncyptData.uiNumBLen, stEncyptData.szKey, stEncyptData.uiKeyLen);
     if (0 != iRet)
     {
         stEncyptData.bIsDHKey = false;
-        stEncyptData.uiKeyLen = MAX_ENCRYPT_DATA_LEN;
         std::string sKey = "";
         for (int i = 0; i < MAX_ENCRYPT_DATA_LEN; ++i)
         {
@@ -336,6 +346,7 @@ int NetWork::HandleHandShake2(const NetMsg& oMsg, const sockaddr_in& stClientAdd
         }
         LOG_ERR_FMT(ptrNetLogger, "client[{}] generate DH key fail, use random key: {}", sock_addr(&stClientAddr), sKey);
     }
+    NetSecurityMgr::PrintKey(stEncyptData.szKey, stEncyptData.uiKeyLen, "send server key:");
 
     // 创建新连接
     poConn = NetConnectMgr::Inst().CreateNewConn(this, stClientAddr, stReq.szCookies, stEncyptData);
@@ -499,3 +510,109 @@ STNetPacket* NetWork::NewPacket(size_t ulBufferSize)
     return poPacket;
 }
 
+int NetWork::SendHandShake1Msg(const sockaddr_in& stServerAddr)
+{
+    STNetMsgHead stHead = {NET_PACKET_HANDSHAKE1, 0};
+    STHandShakePacket stPacket = {0};
+    return SendHandShakeMsg(stHead, stPacket, stServerAddr);
+}
+
+int NetWork::HandleHandShake1Ack(const NetMsg& oMsg, const sockaddr_in& stServerAddr)
+{
+    const STHandShakePacket& stPacket = oMsg.Body().stHandShake;
+    STHandShakePacket stRsp = {0};
+    memcpy(&stRsp, &stPacket, sizeof(STHandShakePacket));
+
+    // 生成大数A
+    stRsp.bIsKey = 1;
+    uint16_t usLen = MAX_ENCRYPT_DATA_LEN;
+    m_stEncyptData.uiNumBLen = MAX_ENCRYPT_DATA_LEN;
+    int iRet = NetSecurityMgr::Inst().HandleHandShake1ACK((unsigned char*)stRsp.szEncryptData, usLen, m_stEncyptData.szNumB, m_stEncyptData.uiNumBLen);
+    if (0 != iRet)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "client[{}] generate DH key fail", sock_addr(&m_stSockAddr));
+        return -1;
+    }
+    stRsp.bEncryptDataLen = usLen;
+    memcpy(m_stEncyptData.szNumA, stRsp.szEncryptData, stRsp.bEncryptDataLen);
+    m_stEncyptData.uiNumALen = stRsp.bEncryptDataLen;
+
+    STNetMsgHead stHead = {NET_PACKET_HANDSHAKE2, 0};
+    // 发起第二次握手
+    return SendHandShakeMsg(stHead, stRsp, stServerAddr);
+}
+
+int NetWork::HandleHandShake2Ack(const NetMsg& oMsg, const sockaddr_in& stServerAddr)
+{
+    if (m_ulConnID > 0)
+    {
+        LOG_DBG_FMT(ptrNetLogger, "client[{}] conn[{}] exist", sock_addr(&m_stSockAddr), m_ulConnID);
+        return 0;
+    }
+
+    const STHandShakePacket& stPacket = oMsg.Body().stHandShake;
+    if (stPacket.dwConnId == 0)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "client[{}] handshake fail. server: {}", sock_addr(&m_stSockAddr), sock_addr(&stServerAddr));
+        return 0;
+    }
+    
+    if (stPacket.bIsKey)
+    {
+        // 直接保存密钥
+        memcpy(m_stEncyptData.szKey, stPacket.szEncryptData, stPacket.bEncryptDataLen);
+        m_stEncyptData.uiKeyLen = stPacket.bEncryptDataLen;
+    }
+    else
+    {
+        // 生成密钥
+        m_stEncyptData.uiKeyLen = MAX_ENCRYPT_DATA_LEN;
+        int iRet = NetSecurityMgr::Inst().HandleHandShake2ACK(
+            (const uint8_t*)stPacket.szEncryptData, stPacket.bEncryptDataLen, m_stEncyptData.szNumA, m_stEncyptData.uiNumALen, 
+            m_stEncyptData.szNumB, m_stEncyptData.uiNumBLen, m_stEncyptData.szKey, m_stEncyptData.uiKeyLen);
+        if (0 != iRet)
+        {
+            LOG_ERR_FMT(ptrNetLogger, "client[{}] generate DH key fail", sock_addr(&m_stSockAddr));
+            return -1;
+        }
+
+        NetSecurityMgr::PrintKey(m_stEncyptData.szKey, m_stEncyptData.uiKeyLen, "client key:");
+    }
+
+    // 创建新连接
+    NetConnect* poConn = NetConnectMgr::Inst().CreateNewConn(this, stServerAddr, stPacket.szCookies, m_stEncyptData);
+    if (nullptr == poConn)
+    {
+        LOG_ERR_FMT(ptrNetLogger, "client[{}] handshake2 fail: create conn fail.", sock_addr(&m_stSockAddr));
+        return -1;
+    }
+
+    m_ulConnID = poConn->GetConnectID();
+    // 握手并成功建立连接
+    LOG_DBG_FMT(ptrNetLogger, "client[{}] handshake2 succ, connid:{}", sock_addr(&m_stSockAddr), poConn->GetConnectID());
+    return 0;
+}
+
+int NetWork::SendHeartBeat(const sockaddr_in& stServerAddr)
+{
+    STNetMsgHead stHead = {NET_PACKET_HEARTBEAT, 0};
+    STHeartBeatPacket stPacket = {0};
+    stPacket.dwConnId = m_ulConnID;
+    stPacket.ullClientTimeMs = Now::TimeStamp();
+
+    STNetPacket *pstNetPacket = NewPacket(HEARTBEAT_PACKET_SIZE);
+    CHECK_IF_PARAM_NULL(ptrNetLogger, pstNetPacket, -1);
+
+    NetWriter oWriter(pstNetPacket->szBuff, pstNetPacket->ulBuffLen);
+    oWriter.Write(stHead);
+    oWriter.Write(stPacket);
+    pstNetPacket->ulDataLen = oWriter.GetSize();
+    pstNetPacket->stClientAddr = stServerAddr;
+
+    NetConnect* pConn = NetConnectMgr::Inst().GetConnByID(m_ulConnID);
+    if (nullptr != pConn)
+    {
+        pConn->UpdateHeartBeat(stPacket.ullClientTimeMs);
+    }
+    return 0;
+}

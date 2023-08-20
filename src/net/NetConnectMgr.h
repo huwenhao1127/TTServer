@@ -66,7 +66,7 @@ public:
      * @param stEncyptData 
      * @return NetConnect* 
      */
-    NetConnect* CreateNewConn(NetWork *poNetWork, const sockaddr_in& stClientAddr, const char *szCookie, const STEncyptData& stEncyptData);
+    NetConnect* CreateNewConn(NetWork *poNetWork, const sockaddr_in& stClientAddr, const char *szCookie, const STEncyptData& stEncyptData, uint32_t ulConnID = 0);
 private:
     /**
      * @brief 处理待删除的连接

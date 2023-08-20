@@ -14,14 +14,16 @@ NetMgr::~NetMgr()
 {
 }
 
-int NetMgr::Init()
+int NetMgr::Init(int iPort /* = UDP_ADDR_PORT */)
 {
+    m_bIsClient = (iPort == UDP_ADDR_PORT) ? false : true;
+    
     CHECK_PARAM_NOT_ZERO(ptrNetLogger, NetSecurityMgr::Inst().Init(), -1);
     CHECK_PARAM_NOT_ZERO(ptrNetLogger, CookieMgr::Inst().Init(), -1);
     CHECK_PARAM_NOT_ZERO(ptrNetLogger, EpollMgr::Inst().Init(), -1);
-    CHECK_PARAM_NOT_ZERO(ptrNetLogger, NetWorkMgr::Inst().Init(), -1);
+    CHECK_PARAM_NOT_ZERO(ptrNetLogger, NetWorkMgr::Inst().Init(iPort), -1);
     CHECK_PARAM_NOT_ZERO(ptrNetLogger, NetConnectMgr::Inst().Init(), -1);
-    LOG_DBG_FMT(ptrNetLogger, "NetMgr init succ.");
+    LOG_DBG_FMT(ptrNetLogger, "NetMgr init succ, is client:{}", m_bIsClient);
     return 0;
 }
 

@@ -131,30 +131,41 @@ target_include_directories(TTLogger PUBLIC "${PROJECT_SOURCE_DIR}/run/lib/fmt/in
 # target_link_libraries(ring_queue_test TTLogger)
 
 # -------------------------------------
-# 网络线程测试
-# 将目录下的所有源文件保存到变量中
-# set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
-# file(GLOB SOURCE_FILES "${SOURCE_DIR}/*.cpp" "${SOURCE_DIR}/*.c")
-
-# set(NET_SERVER_SOURCE ${PROJECT_SOURCE_DIR}/test/net_server.cpp)
-# set(NET_SERVER_SOURCE "${SOURCE_FILES};${NET_SERVER_SOURCE}")
-# add_executable(net_server ${NET_SERVER_SOURCE})
-
-# # 设置依赖，编译logger_test前先生成动态链接库
-# add_dependencies(net_server TTLogger)
-# # 连接动态链接库
-# target_link_libraries(net_server TTLogger)
-
-# -------------------------------------
 # 网络相关功能测试
 # 将目录下的所有源文件保存到变量中
-set(NET_TEST_SOURCE 
-    ${PROJECT_SOURCE_DIR}/test/net_test.cpp
-    ${PROJECT_SOURCE_DIR}/src/net/SendQueue.cpp
-    ${PROJECT_SOURCE_DIR}/src/net/NetSecurityMgr.cpp)
-add_executable(net_test ${NET_TEST_SOURCE})
+# set(NET_TEST_SOURCE 
+#     ${PROJECT_SOURCE_DIR}/test/net_test.cpp
+#     ${PROJECT_SOURCE_DIR}/src/net/SendQueue.cpp
+#     ${PROJECT_SOURCE_DIR}/src/net/NetSecurityMgr.cpp)
+# add_executable(net_test ${NET_TEST_SOURCE})
+
+# # 设置依赖，编译logger_test前先生成动态链接库
+# add_dependencies(net_test TTLogger)
+# # 连接动态链接库
+# target_link_libraries(net_test TTLogger)
+
+set(SOURCE_DIR ${CMAKE_CURRENT_SOURCE_DIR}/src/*)
+file(GLOB SOURCE_FILES "${SOURCE_DIR}/*.cpp" "${SOURCE_DIR}/*.c")
+
+# -------------------------------------
+# 网络框架测试 服务器
+# 将目录下的所有源文件保存到变量中
+set(NET_SERVER_SOURCE ${PROJECT_SOURCE_DIR}/test/net_server.cpp)
+set(NET_SERVER_SOURCE "${SOURCE_FILES};${NET_SERVER_SOURCE}")
+add_executable(net_server ${NET_SERVER_SOURCE})
 
 # 设置依赖，编译logger_test前先生成动态链接库
-add_dependencies(net_test TTLogger)
+add_dependencies(net_server TTLogger)
 # 连接动态链接库
-target_link_libraries(net_test TTLogger)
+target_link_libraries(net_server TTLogger)
+
+# -------------------------------------
+# 网络框架测试 客户端
+set(NET_CLIENT_SOURCE ${PROJECT_SOURCE_DIR}/test/net_client.cpp)
+set(NET_CLIENT_SOURCE "${SOURCE_FILES};${NET_CLIENT_SOURCE}")
+add_executable(net_client ${NET_CLIENT_SOURCE})
+
+# 设置依赖，编译logger_test前先生成动态链接库
+add_dependencies(net_client TTLogger)
+# 连接动态链接库
+target_link_libraries(net_client TTLogger)

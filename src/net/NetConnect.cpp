@@ -184,6 +184,7 @@ int NetConnect::InitConnect(
     }
 
     // 初始化kcp
+    m_oKcp.MemInit();
     if (0 != m_oKcp.Init())
     {
         LOG_ERR_FMT(ptrNetLogger, " conn[{}] init kcp fail, client[{}]", m_ulConnID, sock_addr(&stClientAddr));
@@ -227,7 +228,7 @@ int NetConnect::SendMsg(const char *pData, int iLen, const MsgOpt& stOpt)
 
     // 网络数据编码
     static char szEncodeMsgBuff[MAX_ENCODE_BUF_SIZE];
-    int iEncodeMsgLen = sizeof(szEncodeMsgBuff);
+    size_t iEncodeMsgLen = sizeof(szEncodeMsgBuff);
     if (0 != EncodeMsgData(pData, iLen, szEncodeMsgBuff, iEncodeMsgLen, stOpt.bIsEncrypt))
     {
         LOG_ERR_FMT(ptrNetLogger, " conn[{}] send msg fail, encode msg fail", m_ulConnID);
@@ -244,17 +245,22 @@ int NetConnect::SendMsg(const char *pData, int iLen, const MsgOpt& stOpt)
     return SendUnreliable(szEncodeMsgBuff, iEncodeMsgLen);
 }
 
-int NetConnect::EncodeMsgData(const char *pInData, int iInDataLen, char *pEncodeData, int& iEncodeDataLen, bool bEncrypt)
+int NetConnect::EncodeMsgData(const char *pInData, int iInDataLen, char *pEncodeData, size_t& iEncodeDataLen, bool bEncrypt)
 {
     DataHead stHead = {0};
     stHead.bIsEncrypt = bEncrypt;
-    //char *pHead = pEncodeData;
-    //char *pData = pEncodeData + sizeof(DataHead);
 
     // 数据加密
     if (bEncrypt)
     {
-        ;
+        // 写头
+        NetWriter oWriter(pEncodeData, sizeof(stHead));
+        oWriter.WriteDataHead(stHead);
+        char *pData = pEncodeData + sizeof(DataHead);
+        NetSecurityMgr::Inst().SetEncKey(m_stEncyptData.szKey, m_stEncyptData.uiKeyLen);
+        NetSecurityMgr::Inst().EncryptData(pInData, (size_t)iInDataLen, pData, iEncodeDataLen);
+        LOG_DBG_FMT(ptrNetLogger, " conn[{}] encode succ", m_ulConnID);
+        return 0;        
     }
 
     // 检查数据长度是否超过编码缓冲区
@@ -480,15 +486,26 @@ int NetConnect::RecvOneMsg(const char* szMsg, int iMsgLen)
     stRecvHead.bIsProc = false;
     stRecvHead.ulConnID = m_ulConnID;
     stRecvHead.iDataLen = oReader.GetRemain();
+    const char *pData = oReader.GetBuff();
 
     // 数据解密
     if (stHead.bIsEncrypt)
     {
-        ;
+        static char szDecryptBuff[MAX_BIZ_MSG_SIZE];
+        size_t iDecryptDataLen = MAX_BIZ_MSG_SIZE;
+        NetSecurityMgr::Inst().SetEncKey(m_stEncyptData.szKey, m_stEncyptData.uiKeyLen);
+        int iRet = NetSecurityMgr::Inst().DecryptData(oReader.GetBuff(), stRecvHead.iDataLen, szDecryptBuff, iDecryptDataLen);
+        if (0 != iRet)
+        {
+            LOG_ERR_FMT(ptrNetLogger, " conn[{}] decrypt msg fail.", m_ulConnID);
+            return -1;
+        }
+        stRecvHead.iDataLen = iDecryptDataLen;
+        pData = szDecryptBuff;
     }
 
     // 发送给主线程
-    return NetMgr::Inst().SendN2MMsg(stRecvHead, oReader.GetBuff());
+    return NetMgr::Inst().SendN2MMsg(stRecvHead, pData);
 }
 
 int NetConnect::BindConnect(const STBindConnMsg& stBindMsg)

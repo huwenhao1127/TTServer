@@ -13,9 +13,9 @@ NetWorkMgr::~NetWorkMgr()
 {
 }
 
-int NetWorkMgr::Init()
+int NetWorkMgr::Init(int iPort /* = -1 */)
 {
-    
+    m_iPort = (iPort == -1) ? UDP_ADDR_PORT : iPort;
     m_mapNetWork.clear();
     if (UDP_ADDR_USE_ANY_ADDRESS)
     {
@@ -104,7 +104,7 @@ NetWork::ptr NetWorkMgr::CreateNetWork(in_addr_t ulAddr)
     sockaddr_in stSockAddr;
     ZeroStruct(stSockAddr);
     stSockAddr.sin_family = AF_INET;
-    stSockAddr.sin_port = htons(UDP_ADDR_PORT);
+    stSockAddr.sin_port = htons(m_iPort);
     stSockAddr.sin_addr.s_addr = ulAddr;
 
     // 创建socket
@@ -125,7 +125,7 @@ NetWork::ptr NetWorkMgr::CreateNetWork(in_addr_t ulAddr)
 
     // 创建网络对象
     uint64_t ullNetWorkID = sockaddr_to_id(stSockAddr);
-    NetWork::ptr pNetWork(new NetWork(iFD, ullNetWorkID, stSockAddr));
+    NetWork::ptr pNetWork(new NetWork(ullNetWorkID, iFD, stSockAddr));
     if (nullptr == pNetWork)
     {
         EpollMgr::Inst().PollDel(iFD);
@@ -184,4 +184,34 @@ int NetWorkMgr::CreateSocket(const struct sockaddr_in& stAddr)
         return -1;
     }
     return iFD;
+}
+
+int NetWorkMgr::SendHandShake1Msg(const sockaddr_in& stServerAddr)
+{
+    NetWork::ptr pNetWork = m_mapNetWork.begin()->second;
+    if (nullptr != pNetWork)
+    {
+        pNetWork->SendHandShake1Msg(stServerAddr);
+    }
+    return 0;
+}
+
+int NetWorkMgr::SendHeartBeat(const sockaddr_in& stServerAddr)
+{
+    NetWork::ptr pNetWork = m_mapNetWork.begin()->second;
+    if (nullptr != pNetWork)
+    {
+        pNetWork->SendHeartBeat(stServerAddr);
+    }
+    return 0;
+}
+
+bool NetWorkMgr::ClientConnected()
+{
+    NetWork::ptr pNetWork = m_mapNetWork.begin()->second;
+    if (nullptr != pNetWork)
+    {
+        return pNetWork->Connected();
+    }
+    return false;
 }

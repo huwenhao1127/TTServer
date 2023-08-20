@@ -243,6 +243,18 @@ struct STCloseConnMsg
     int     iDelayCloseTime;        // 延迟关闭时间
 };
 
+// DH算法加密相关数据
+struct STEncyptData
+{
+    bool        bIsDHKey;                       // 密钥是否由DH生成
+    uint16_t    uiKeyLen;                       // 密钥长度
+    uint8_t     szKey[MAX_ENCRYPT_DATA_LEN];    // 密钥
+    uint16_t    uiNumALen;                      // 大数A长度
+    uint8_t     szNumA[MAX_ENCRYPT_DATA_LEN];   // 大数A(客户端公钥)
+    uint16_t    uiNumBLen;                      // 大数B长度
+    uint8_t     szNumB[MAX_ENCRYPT_DATA_LEN];   // 大数B(服务器公钥)
+};
+
 /** 业务包结构定义 END **/
 #pragma pack()
 
@@ -332,6 +344,3 @@ struct STCloseConnMsg
 #define MAX_CONN_RECV_NUM       5000                  // 防攻击-单连接每10秒收包数量上限
 #define MAX_CONN_RECV_SIZE      1024000               // 防攻击-单连接每10秒收包流量上限
 #define MAX_LOOP_MSG_NUM        1000                  // 单次循环处理的最大消息数
-
-
-

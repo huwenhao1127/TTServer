@@ -7,7 +7,7 @@ int NetConnectMgr::Init()
     m_mapConn.clear();
     m_mapClosedConn.clear();
     m_setExistID.clear();
-    m_ulCurID = 0;
+    m_ulCurID = 1;
     m_tLastUpdate = 0;
     LOG_DBG_FMT(ptrNetLogger, "NetConnectMgr init succ.");
     return 0;
@@ -129,18 +129,26 @@ int NetConnectMgr::AllocID(uint32_t& ulID)
         }
         m_ulCurID++;
     }
-    m_setExistID.insert(m_ulCurID);
-    return m_ulCurID;
+
+    LOG_DBG_FMT(ptrNetLogger, "alloc connID:{}, existID: {}, conn size:{}", m_ulCurID, m_setExistID.size(), m_mapConn.size());
+    ulID = m_ulCurID;
+    m_setExistID.insert(ulID);
+    return 0;
 }
 
-NetConnect* NetConnectMgr::CreateNewConn(NetWork *poNetWork, const sockaddr_in& stClientAddr, const char *szCookie, const STEncyptData& stEncyptData)
+NetConnect* NetConnectMgr::CreateNewConn(
+    NetWork *poNetWork, const sockaddr_in& stClientAddr, const char *szCookie, const STEncyptData& stEncyptData, uint32_t ulConnID /* = 0 */)
 {
-    uint32_t ulConnID = 0;
-    if (0 != AllocID(ulConnID))
+    if (0 == ulConnID)
     {
-        LOG_ERR_FMT(ptrNetLogger, "alloc connID fail, existID: {}", m_setExistID.size());
-        return nullptr;
+        if (0 != AllocID(ulConnID))
+        {
+            LOG_ERR_FMT(ptrNetLogger, "alloc connID fail, existID: {}", m_setExistID.size());
+            return nullptr;
+        }
     }
+
+    LOG_DBG_FMT(ptrNetLogger, "begin create conn:{}", ulConnID);
 
     NetConnect *poConn = new NetConnect;
     if (nullptr == poConn)

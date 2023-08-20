@@ -50,21 +50,6 @@ void SendQueueTest()
     }
 }
 
-// 打印key的函数
-void PrintKey(const unsigned char* key, size_t keyLength)
-{
-    std::stringstream ss;
-    
-    // 将key转换为十六进制字符串
-    ss << std::hex << std::setfill('0');
-    for (size_t i = 0; i < keyLength; ++i) {
-        ss << std::setw(2) << static_cast<unsigned>(key[i]);
-    }
-    
-    // 打印key
-    std::cout << ss.str() << std::endl;
-}
-
 // DH协商密钥测试
 void DHTest(uint8_t *szKey, int& iKeyLen)
 {

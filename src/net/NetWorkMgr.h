@@ -28,7 +28,7 @@ public:
      * 
      * @return int 
      */
-    int Init();
+    int Init(int iPort = -1);
 
     /**
      * @brief 监听io事件
@@ -36,6 +36,29 @@ public:
      * @return int 
      */
     int Proc();
+
+    /**
+     * @brief 客户端发第一次握手包
+     * 
+     * @param stServerAddr 
+     * @return int 
+     */
+    int SendHandShake1Msg(const sockaddr_in& stServerAddr);
+
+    /**
+     * @brief 发送心跳包
+     * 
+     * @return int 
+     */
+    int SendHeartBeat(const sockaddr_in& stServerAddr);
+
+    /**
+     * @brief 客户端是否成功连接
+     * 
+     * @return true 
+     * @return false 
+     */
+    bool ClientConnected();
 
 private:
     /**
@@ -63,5 +86,6 @@ private:
     int CreateSocket(const struct sockaddr_in& stAddr);
 
 private:
-    NetWorkMap m_mapNetWork;
+    int m_iPort;
+    NetWorkMap m_mapNetWork;  
 };

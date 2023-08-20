@@ -146,6 +146,48 @@ public:
      */
     int SendRstMsg(uint8_t bType, uint32_t ulConnID, const sockaddr_in& stClientAddr);
 
+public:
+    // 客户端处理
+    /**
+     * @brief 发第一次握手包
+     * 
+     * @param stServerAddr 
+     * @return int 
+     */
+    int SendHandShake1Msg(const sockaddr_in& stServerAddr);
+
+    /**
+     * @brief 处理第一次握手包ack
+     * 
+     * @param oMsg 
+     * @param stClientAddr 
+     * @return int 
+     */
+    int HandleHandShake1Ack(const NetMsg& oMsg, const sockaddr_in& stServerAddr);
+
+    /**
+     * @brief 处理第二次握手包ack,连接建立
+     * 
+     * @param oMsg 
+     * @param stClientAddr 
+     * @return int 
+     */
+    int HandleHandShake2Ack(const NetMsg& oMsg, const sockaddr_in& stServerAddr);
+
+    /**
+     * @brief 客户端成功连接
+     * 
+     * @return true 
+     * @return false 
+     */
+    inline bool Connected() const {return m_ulConnID > 0;}
+
+    /**
+     * @brief 发送心跳包
+     * 
+     * @return int 
+     */
+    int SendHeartBeat(const sockaddr_in& stServerAddr);
 private:
     uint64_t m_ullID;                       // 网络对象id
     int m_iSockFD;                          // udp fd
@@ -153,4 +195,8 @@ private:
     SendQueue m_oSendQueue;                 // 发送队列
     NetMsg m_oMsg;                          // 网络包
     static char s_szRecvBuff[MAX_NET_RECV_BUF_LEN]; // 接收缓冲区
+
+    /** 客户端握手缓存数据 **/
+    uint32_t m_ulConnID;                    // 客户端使用,与服务端建立的连接id
+    STEncyptData  m_stEncyptData;           // 加密数据    
 };

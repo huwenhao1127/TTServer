@@ -18,7 +18,6 @@
 #include <stdio.h>
 
 
-
 //=====================================================================
 // KCP BASIC
 //=====================================================================
@@ -297,8 +296,8 @@ ikcpcb* ikcp_create(IUINT32 conv, void *user)
 #else
 ikcpcb* ikcp_create(IUINT32 conv, void *user, ikcpcb* kcp, int mtu, char* buffer)
 {
-	kcp = (ikcpcb*)ikcp_malloc(sizeof(struct IKCPCB));
-	if (kcp == NULL) return NULL;
+	// kcp = (ikcpcb*)ikcp_malloc(sizeof(struct IKCPCB));
+	if (kcp == NULL || buffer == NULL) return NULL;
 	kcp->conv = conv;
 	kcp->user = user;
 	kcp->snd_una = 0;
@@ -329,8 +328,13 @@ ikcpcb* ikcp_create(IUINT32 conv, void *user, ikcpcb* kcp, int mtu, char* buffer
 	kcp->nrcv_que = 0;
 	kcp->nsnd_que = 0;
 	kcp->state = 0;
+
+#if 0
 	kcp->acklist = NULL;
 	kcp->ackblock = 0;
+#else
+	kcp->ackblock = (128 + 10);	// 与最大接收窗口一致
+#endif
 	kcp->ackcount = 0;
 	kcp->rx_srtt = 0;
 	kcp->rx_rttval = 0;
@@ -384,12 +388,15 @@ void ikcp_release(ikcpcb *kcp)
 			iqueue_del(&seg->node);
 			ikcp_segment_delete(kcp, seg);
 		}
+
+#if 0
 		if (kcp->buffer) {
 			ikcp_free(kcp->buffer);
 		}
 		if (kcp->acklist) {
 			ikcp_free(kcp->acklist);
 		}
+#endif
 
 		kcp->nrcv_buf = 0;
 		kcp->nsnd_buf = 0;
@@ -397,8 +404,10 @@ void ikcp_release(ikcpcb *kcp)
 		kcp->nsnd_que = 0;
 		kcp->ackcount = 0;
 		kcp->buffer = NULL;
+#if 0
 		kcp->acklist = NULL;
 		ikcp_free(kcp);
+#endif
 	}
 }
 
@@ -708,6 +717,7 @@ static void ikcp_ack_push(ikcpcb *kcp, IUINT32 sn, IUINT32 ts)
 	IUINT32 *ptr;
 
 	if (newsize > kcp->ackblock) {
+#if 0
 		IUINT32 *acklist;
 		IUINT32 newblock;
 
@@ -730,6 +740,10 @@ static void ikcp_ack_push(ikcpcb *kcp, IUINT32 sn, IUINT32 ts)
 
 		kcp->acklist = acklist;
 		kcp->ackblock = newblock;
+#else
+		// 此时大部分是重复ack,直接丢弃
+		return;
+#endif
 	}
 
 	ptr = &kcp->acklist[kcp->ackcount * 2];
@@ -1303,20 +1317,20 @@ IUINT32 ikcp_check(const ikcpcb *kcp, IUINT32 current)
 	return current + minimal;
 }
 
-
-
 int ikcp_setmtu(ikcpcb *kcp, int mtu)
 {
-	char *buffer;
 	if (mtu < 50 || mtu < (int)IKCP_OVERHEAD) 
 		return -1;
+#if 0
+	char *buffer;
 	buffer = (char*)ikcp_malloc((mtu + IKCP_OVERHEAD) * 3);
 	if (buffer == NULL) 
 		return -2;
-	kcp->mtu = mtu;
-	kcp->mss = kcp->mtu - IKCP_OVERHEAD;
 	ikcp_free(kcp->buffer);
 	kcp->buffer = buffer;
+#endif
+	kcp->mtu = mtu;
+	kcp->mss = kcp->mtu - IKCP_OVERHEAD;
 	return 0;
 }
 
